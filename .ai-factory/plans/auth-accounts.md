@@ -86,14 +86,14 @@ Meaning preservation: PASS
 
 ### Phase 2: Frontend sign-in
 
-- [ ] Task 7: Firebase client and auth hook (depends on 5)
+- [x] Task 7: Firebase client and auth hook (depends on 5)
   - Files: `frontend/package.json`, `frontend/src/features/auth/firebase.ts`, `frontend/src/features/auth/useAuth.ts`, `frontend/.env.example`, `frontend/src/vite-env.d.ts` (env typings, if the file exists — otherwise add typings in `firebase.ts`)
   - Add `firebase` dependency. `firebase.ts` initializes the app from `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`; exports `auth`.
   - `useAuth()`: `{ user, loading, signIn, signOut }` using `onAuthStateChanged`, `signInWithPopup(GoogleAuthProvider)`, `signOut`.
   - `.env.example` lists the 4 vars with placeholder values; real values go in `.env.local` (git-ignored by the Vite template's `*.local`).
   - Logging: dev-only `console.debug` on auth state change (signed in / signed out, no token, no email); `console.error` on sign-in failure.
 
-- [ ] Task 8: Authenticated fetch wrapper (depends on 7)
+- [x] Task 8: Authenticated fetch wrapper (depends on 7)
   - Files: `frontend/src/shared/api.ts`
   - `apiGet<T>(path)`: gets `await auth.currentUser.getIdToken()`, sends `Authorization: Bearer …`; on non-2xx throws `ApiError { status, problem }` (parsed ProblemDetails when present).
   - Logging: dev-only `console.debug` of method, path, status; never log the token.
