@@ -420,4 +420,4 @@ token as an ordinary commit scope.
   7. If one file spans multiple groups, use hunk-level staging for each group: stage only that group's hunks with `git add -p` or `git apply --cached`, commit, then repeat for the next group.
   8. If hunk-level staging or cached-patch application cannot be applied confidently, stop before changing staging and ask the user to adjust grouping or commit everything together.
   9. Offer to push only after all commits are done
-- NEVER add `Co-Authored-By` or any other trailer attributing authorship to the AI. Commits must not contain AI co-author lines
+- ALWAYS end every commit message with a blank line followed by the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (or the current model's attribution line, if the session provides one)
