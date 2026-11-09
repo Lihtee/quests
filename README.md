@@ -2,7 +2,7 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI) and Google sign-in with an email allowlist.
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, and automatic deployment to AWS Lightsail.
 
 ## Prerequisites
 
@@ -55,10 +55,13 @@ CI runs the same checks on every push and pull request to `main` (see [.github/w
 | `ConnectionStrings__Default` | `Data Source=quests.db` (Development only) | SQLite connection string. Outside Development it has no default, and the API refuses to start without it. |
 | `FIREBASE_PROJECT_ID` | — (required) | Firebase project id. ID tokens must have this project as audience and `https://securetoken.google.com/<id>` as issuer. The API refuses to start without it. |
 | `ALLOWED_EMAILS` | empty | Comma-separated emails allowed to sign in (case-insensitive). Read at startup, so restart to apply changes. Empty means nobody can sign in, and the API logs a warning. |
+| `LOG_FILE` | empty (Docker image: `/app/logs/quests.log`) | When set, logs go only to this file (JSON lines, rotated at 10 MB, 5 files kept) and console logging is off. The directory is created if missing. |
 
 Frontend variables go in `frontend/.env.local` (git-ignored; template: [frontend/.env.example](frontend/.env.example)): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
-Logs are written to the console as JSON, one line per entry.
+Logs are written as JSON, one line per entry: to the console, or to `LOG_FILE` when it is set.
+
+The API also serves the React build from `wwwroot` (present in the Docker image, not in local dev). Unknown `/api/*` paths return ProblemDetails, never the web app.
 
 ## Authentication
 
@@ -94,6 +97,10 @@ The API applies new migrations on its next start. `dotnet ef` does not need the 
 
 > `backend/nuget.config` limits package sources to nuget.org, so private feeds in your user-level NuGet config don't break the restore.
 
+## Deployment
+
+Every push to `main` builds a Docker image and deploys it to AWS Lightsail behind Caddy (HTTPS). One-time setup, GitHub secrets, logs and rollback: [docs/deployment.md](docs/deployment.md).
+
 ## Project Layout
 
 | Path | Contents |
@@ -101,5 +108,8 @@ The API applies new migrations on its next start. `dotnet ef` does not need the 
 | `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/` |
 | `backend/Quests.Tests` | xUnit tests |
 | `frontend/` | React + TypeScript (Vite) app; sign-in in `src/features/auth/`, API client in `src/shared/api.ts` |
-| `.github/workflows/` | CI |
+| `.github/workflows/` | CI and deploy |
+| `Dockerfile`, `.dockerignore` | Production image (API + React build) |
+| `deploy/` | Compose stack and Caddyfile used on the instance |
+| `docs/` | Detailed documentation ([deployment](docs/deployment.md)) |
 | `.config/dotnet-tools.json` | Local .NET tools (`dotnet-ef`) |

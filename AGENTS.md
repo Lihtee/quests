@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton + auth & accounts (Firebase JWT, email allowlist, users). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -30,13 +30,18 @@ quests/
 │   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID)
 │   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
-│   │       └── Logging/              # JSON console logging, LOG_LEVEL
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke + auth tests)
+│   │       ├── Logging/              # JSON logging: console or LOG_FILE (NReco.Logging.File), LOG_LEVEL
+│   │       └── Web/                  # Static React build from wwwroot + SPA fallback
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, static web, file logging)
 ├── frontend/                         # React + TypeScript (Vite), oxlint
 │   └── src/                          # main.tsx, App.tsx
 │       ├── features/auth/            # Firebase client, useAuth, AuthGate (sign-in UI)
 │       └── shared/api.ts             # Fetch wrapper with Firebase ID token
-├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build
+├── deploy/                           # compose.yml (api + Caddy) and Caddyfile, uploaded to the instance by CI
+├── docs/                             # Detailed documentation (deployment.md)
+├── Dockerfile                        # Production image: API + React build in wwwroot
+├── .dockerignore
+├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build, deploy on push to main
 ├── .config/dotnet-tools.json         # Local tools (dotnet-ef)
 ├── .ai-factory/                      # AI Factory context: config, description, architecture, rules, plans
 ├── .claude/skills/, .agents/skills/  # aif-* skills
@@ -53,7 +58,9 @@ quests/
 | backend/Quests.Tests/ApiFactory.cs | In-memory API host for tests (temp SQLite, test JWT key) |
 | frontend/src/main.tsx | Frontend entry point |
 | frontend/vite.config.ts | Vite config, `/api` proxy to `localhost:5080` |
-| .github/workflows/ci.yml | CI workflow |
+| .github/workflows/ci.yml | CI workflow + deploy job |
+| Dockerfile | Production image build |
+| deploy/compose.yml | Production Compose stack |
 | .ai-factory/DESCRIPTION.md | Project specification, features, stack, open decisions |
 | .ai-factory/config.yaml | AI Factory configuration |
 | .mcp.json | MCP server configuration |
@@ -63,6 +70,7 @@ quests/
 | Document | Path | Description |
 |----------|------|-------------|
 | README | README.md | Setup, run, tests, config, auth, migrations |
+| Deployment | docs/deployment.md | Lightsail setup, GitHub secrets, operations, rollback |
 
 ## AI Context Files
 

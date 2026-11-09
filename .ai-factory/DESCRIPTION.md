@@ -29,7 +29,8 @@ The distinguishing idea is time-aware tasks: each task can have a **hard deadlin
 - **Client offline storage:** IndexedDB via Dexie (same code path on web and Android)
 - **Auth:** Firebase Authentication (Google sign-in); API validates Firebase JWTs; invite = email allowlist
 - **Notifications:** Capacitor Local Notifications (exact alarms) + Firebase Cloud Messaging (high-priority push)
-- **Hosting / CI:** AWS Lightsail (API + web), GitHub, GitHub Actions
+- **Hosting / CI:** AWS Lightsail (API + web), GitHub, GitHub Actions; Docker Compose on the instance, image on Docker Hub, Caddy for HTTPS (Let's Encrypt), DuckDNS hostname
+- **Logging:** Microsoft.Extensions.Logging; JSON console, or a rotated JSON-lines file via NReco.Logging.File when `LOG_FILE` is set (Docker)
 
 ## Architecture Notes
 

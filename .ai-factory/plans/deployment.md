@@ -121,7 +121,7 @@ Meaning preservation: PASS
 
 ### Phase 3: Documentation
 
-- [ ] Task 7: Deployment runbook (`/aif-docs` checkpoint) (depends on 1–6)
+- [x] Task 7: Deployment runbook (`/aif-docs` checkpoint) (depends on 1–6)
   - Files: `docs/deployment.md` (new), `README.md`, `AGENTS.md`
   - `docs/deployment.md`:
     - One-time prerequisites: Lightsail static IP; firewall open TCP 80, 443 (+ UDP 443); SSH user in the `docker` group and Compose plugin installed; DuckDNS subdomain → static IP; Firebase console → Authorized domains: add the DuckDNS domain; Docker Hub public repo `quests` + access token.
