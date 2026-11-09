@@ -89,7 +89,7 @@ Meaning preservation: PASS
 
 ### Phase 2: Docker image, Compose and CI deploy
 
-- [ ] Task 4: Dockerfile and .dockerignore (depends on 1, 2)
+- [x] Task 4: Dockerfile and .dockerignore (depends on 1, 2)
   - Files: `Dockerfile` (repo root), `.dockerignore`
   - Stage `web` (`node:24-alpine`): `ARG VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` → `ENV`; `npm ci`, `npm run build` in `frontend/`.
   - Stage `api` (`mcr.microsoft.com/dotnet/sdk:10.0`): copy `backend/nuget.config` + csproj first for restore caching, then `dotnet publish backend/Quests.Api -c Release -o /out` (Tests project not included).
@@ -97,7 +97,7 @@ Meaning preservation: PASS
   - `.dockerignore`: `**/bin`, `**/obj`, `**/node_modules`, `frontend/dist`, `*.db*`, `**/.env*`, `**/*.local`, `.git`, `.ai-factory`, `.claude`, `.agents`.
   - Logging: n/a (build output only). Manual check: `docker build` locally with the 4 build args, `docker run` with `FIREBASE_PROJECT_ID`/`ALLOWED_EMAILS`, open `http://localhost:8080`.
 
-- [ ] Task 5: Compose stack and Caddy config (depends on 4)
+- [x] Task 5: Compose stack and Caddy config (depends on 4)
   - Files: `deploy/compose.yml`, `deploy/Caddyfile`
   - `compose.yml` services:
     - `api`: `image: ${IMAGE}:${IMAGE_TAG}`, `restart: unless-stopped`, env `FIREBASE_PROJECT_ID`, `ALLOWED_EMAILS`, `LOG_LEVEL` (default `Information`) from `.env`; volumes `quests-data:/app/data`, `quests-logs:/app/logs`; no published ports.
@@ -106,7 +106,7 @@ Meaning preservation: PASS
   - `Caddyfile`: `{$DOMAIN} { encode zstd gzip; reverse_proxy api:8080 }`.
   - Logging: Caddy access logs stay off (default); errors go to Caddy's stdout (rotated).
 
-- [ ] Task 6: CI build, push and deploy job (depends on 4, 5)
+- [x] Task 6: CI build, push and deploy job (depends on 4, 5)
   - Files: `.github/workflows/ci.yml`
   - New job `deploy`: `needs: [backend, frontend]`, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`, `concurrency: { group: deploy, cancel-in-progress: false }`, `permissions: contents: read`.
   - Steps:

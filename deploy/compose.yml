@@ -1,0 +1,44 @@
+# Production stack on the Lightsail instance. CI uploads this file + Caddyfile + .env to ~/quests.
+# Variables come from ~/quests/.env (written by CI on every deploy).
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  api:
+    image: ${IMAGE}:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS}
+      LOG_LEVEL: ${LOG_LEVEL:-Information}
+    volumes:
+      - quests-data:/app/data
+      - quests-logs:/app/logs
+    logging: *default-logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    logging: *default-logging
+
+volumes:
+  quests-data:
+  quests-logs:
+  caddy-data:
+  caddy-config:

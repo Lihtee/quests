@@ -1,0 +1,16 @@
+**/bin
+**/obj
+**/node_modules
+frontend/dist
+*.db*
+**/*.db*
+**/.env*
+**/*.local
+**/appsettings.*.local.json
+.git
+.github
+.ai-factory
+.claude
+.agents
+deploy
+docs
