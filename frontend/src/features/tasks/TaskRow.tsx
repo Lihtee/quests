@@ -13,6 +13,7 @@ interface TaskRowProps {
 export function TaskRow({ task, onToggle, onUpdate, onDelete }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   if (editing) {
     return (
@@ -37,10 +38,6 @@ export function TaskRow({ task, onToggle, onUpdate, onDelete }: TaskRowProps) {
     }
   }
 
-  const handleDelete = () => {
-    if (window.confirm(`Delete "${task.title}"?`)) void run(() => onDelete(task))
-  }
-
   const completed = task.completedAt !== null
 
   return (
@@ -57,14 +54,26 @@ export function TaskRow({ task, onToggle, onUpdate, onDelete }: TaskRowProps) {
         {task.notes && <small>{task.notes}</small>}
         <small>Due: {formatDue(task.dueAt)}</small>
       </div>
-      <div className="task-row__actions">
-        <button type="button" className="secondary outline" disabled={busy} onClick={() => setEditing(true)}>
-          Edit
-        </button>
-        <button type="button" className="secondary outline" disabled={busy} onClick={handleDelete}>
-          Delete
-        </button>
-      </div>
+      {confirmingDelete ? (
+        <div className="task-row__actions">
+          <span>Delete?</span>
+          <button type="button" disabled={busy} onClick={() => void run(() => onDelete(task)).then(() => setConfirmingDelete(false))}>
+            Yes
+          </button>
+          <button type="button" className="secondary outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+            No
+          </button>
+        </div>
+      ) : (
+        <div className="task-row__actions">
+          <button type="button" className="secondary outline" disabled={busy} onClick={() => setEditing(true)}>
+            Edit
+          </button>
+          <button type="button" className="secondary outline" disabled={busy} onClick={() => setConfirmingDelete(true)}>
+            Delete
+          </button>
+        </div>
+      )}
     </article>
   )
 }

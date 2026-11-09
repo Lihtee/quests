@@ -29,7 +29,7 @@ Rationale: The user named this roadmap milestone as the planning request.
 - Limits: title ≤ 200 chars (trimmed, non-empty), notes ≤ 4000 chars (empty → null).
 - `DueAt` is stored as UTC. The browser uses `<input type="datetime-local">` and shows dates in local time.
 - Sort order (server): open tasks first, then by `DueAt` ascending with no-due-date last, then `CreatedAt`. Completed tasks follow, newest completion first. Sorting happens in memory after the owner-filtered query, because EF Core SQLite cannot `ORDER BY` a `DateTimeOffset` column. Per-user lists are small.
-- Delete asks for confirmation with `window.confirm`.
+- Delete asks for confirmation inline: the row's buttons turn into "Delete? [Yes] [No]". No browser pop-up (changed from `window.confirm` at user request, 2026-11-09).
 - Task titles and notes are never logged (rules/base.md: no personal task content at Information or above).
 
 ## Requirements Reconciliation
@@ -98,7 +98,7 @@ Meaning preservation: PASS
   - `tasksApi.ts`: `Task` type matching `TaskResponse`; `listTasks`, `createTask`, `updateTask`, `completeTask`, `reopenTask`, `deleteTask` on top of `apiGet`/`apiSend`.
   - `dateTime.ts`: `toLocalInputValue(iso | null)` / `fromLocalInputValue(value)` (empty → null; else `new Date(value).toISOString()`), `formatDue(iso | null)` (local, short; "—" when null).
   - `TaskForm`: title, notes (textarea), due (`datetime-local`), Submit + optional Cancel. Props: `initial`, `submitLabel`, `onSubmit`, `onCancel?`. Shows `ApiError` ProblemDetails validation messages. Disables submit while saving. Resets after a successful create.
-  - `TaskRow`: checkbox (complete/reopen), title, notes as `<small>`, due, Edit / Delete buttons (Pico `secondary outline`). Edit turns the row into `TaskForm` (inline). Delete asks `window.confirm`.
+  - `TaskRow`: checkbox (complete/reopen), title, notes as `<small>`, due, Edit / Delete buttons (Pico `secondary outline`). Edit turns the row into `TaskForm` (inline). Delete asks inline ("Delete? [Yes] [No]").
   - `TasksPage`: loads the list on mount, then shows the create form, a "Show completed" switch (`role="switch"`), and the list. Completed tasks are hidden unless the switch is on. After each mutation, replace/insert/remove the returned task in state and re-sort with the same order as the server (or refetch the list — implementer picks the simpler one). Loading, empty ("No tasks yet") and error-with-Retry states.
   - `AuthGate` `ok` state: header row with the email + Sign out, then `<TasksPage />` (replaces the "Hello" text).
   - Logging: DEV-only `console.error('[tasks] … failed', error)` on failed calls. No task content in logs.
