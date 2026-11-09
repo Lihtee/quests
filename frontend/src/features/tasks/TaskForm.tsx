@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { ApiError } from '../../shared/api'
+import { validateTask } from '../../domain/taskRules'
 import { fromLocalInputValue, toLocalInputValue } from './dateTime'
-import type { TaskInput } from './tasksApi'
+import { TaskValidationError, type TaskInput } from './taskStore'
 
 interface TaskFormProps {
   initial?: TaskInput
@@ -22,10 +22,14 @@ export function TaskForm({ initial = empty, submitLabel, onSubmit, onCancel }: T
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    const input: TaskInput = { title, notes: notes || null, dueAt: fromLocalInputValue(due) }
+    const invalid = Object.values(validateTask(input))
+    setErrors(invalid)
+    if (invalid.length > 0) return
+
     setSaving(true)
-    setErrors([])
     try {
-      await onSubmit({ title, notes: notes || null, dueAt: fromLocalInputValue(due) })
+      await onSubmit(input)
       if (!onCancel) {
         setTitle('')
         setNotes('')
@@ -82,6 +86,6 @@ export function TaskForm({ initial = empty, submitLabel, onSubmit, onCancel }: T
 }
 
 function errorMessages(error: unknown): string[] {
-  if (error instanceof ApiError && error.problem?.errors) return Object.values(error.problem.errors).flat()
+  if (error instanceof TaskValidationError) return Object.values(error.errors)
   return [error instanceof Error ? error.message : 'Could not save the task']
 }

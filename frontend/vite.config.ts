@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -9,5 +10,9 @@ export default defineConfig({
       // Backend API (dotnet run --project backend/Quests.Api)
       '/api': 'http://localhost:5080',
     },
+  },
+  test: {
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
   },
 })

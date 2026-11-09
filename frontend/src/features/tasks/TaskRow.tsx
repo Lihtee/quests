@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { formatDue } from './dateTime'
 import { TaskForm } from './TaskForm'
-import type { Task, TaskInput } from './tasksApi'
+import type { Task } from '../../shared/db'
+import type { TaskInput } from './taskStore'
 
 interface TaskRowProps {
   task: Task

@@ -1,43 +1,29 @@
+import { liveQuery } from 'dexie'
 import { useEffect, useState } from 'react'
+import { sortTasks } from '../../domain/taskRules'
+import type { QuestsDb, Task } from '../../shared/db'
 import { TaskForm } from './TaskForm'
 import { TaskRow } from './TaskRow'
-import { completeTask, createTask, deleteTask, listTasks, reopenTask, updateTask, type Task, type TaskInput } from './tasksApi'
-
-type ListState = { kind: 'loading' } | { kind: 'ok'; tasks: Task[] } | { kind: 'error'; message: string }
+import { completeTask, createTask, deleteTask, reopenTask, updateTask, type TaskInput } from './taskStore'
 
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : 'Unexpected error')
 
-async function loadList(): Promise<ListState> {
-  try {
-    return { kind: 'ok', tasks: await listTasks() }
-  } catch (error) {
-    if (import.meta.env.DEV) console.error('[tasks] list failed', error)
-    return { kind: 'error', message: messageOf(error) }
-  }
-}
-
-/** Online-only task list. After each change the list is refetched, so the order always matches the server. */
-export function TasksPage() {
-  const [state, setState] = useState<ListState>({ kind: 'loading' })
+/** Task list read live from the local database; writes go to Dexie + outbox and sync in the background. */
+export function TasksPage({ db }: { db: QuestsDb }) {
+  const [tasks, setTasks] = useState<Task[] | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const refresh = async () => setState(await loadList())
-
   useEffect(() => {
-    let active = true
-    void loadList().then((next) => {
-      if (active) setState(next)
+    const subscription = liveQuery(() => db.tasks.filter((t) => t.deletedAt === null).toArray()).subscribe({
+      next: (rows) => setTasks(sortTasks(rows)),
+      error: (error: unknown) => {
+        if (import.meta.env.DEV) console.error('[tasks] local read failed', error)
+        setActionError(`Could not read tasks: ${messageOf(error)}`)
+      },
     })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const retry = () => {
-    setState({ kind: 'loading' })
-    void refresh()
-  }
+    return () => subscription.unsubscribe()
+  }, [db])
 
   /** Runs a row action (toggle/delete); failures are shown above the list instead of thrown. */
   const runAction = async (name: string, action: () => Promise<unknown>) => {
@@ -48,41 +34,25 @@ export function TasksPage() {
       if (import.meta.env.DEV) console.error(`[tasks] ${name} failed`, error)
       setActionError(`Could not ${name} the task: ${messageOf(error)}`)
     }
-    await refresh()
   }
 
-  // Create/update errors are thrown so TaskForm can show validation messages.
+  // Create/update errors are thrown so TaskForm can show them.
   const handleCreate = async (input: TaskInput) => {
-    await createTask(input)
-    await refresh()
+    await createTask(db, input)
   }
 
-  const handleUpdate = async (task: Task, input: TaskInput) => {
-    await updateTask(task.id, input)
-    await refresh()
-  }
+  const handleUpdate = (task: Task, input: TaskInput) => updateTask(db, task.id, input)
 
   const handleToggle = (task: Task) =>
     task.completedAt === null
-      ? runAction('complete', () => completeTask(task.id))
-      : runAction('reopen', () => reopenTask(task.id))
+      ? runAction('complete', () => completeTask(db, task.id))
+      : runAction('reopen', () => reopenTask(db, task.id))
 
-  const handleDelete = (task: Task) => runAction('delete', () => deleteTask(task.id))
+  const handleDelete = (task: Task) => runAction('delete', () => deleteTask(db, task.id))
 
-  if (state.kind === 'loading') return <p aria-busy="true">Loading tasks…</p>
+  if (tasks === null) return actionError ? <p role="alert">{actionError}</p> : <p aria-busy="true">Loading tasks…</p>
 
-  if (state.kind === 'error') {
-    return (
-      <>
-        <p>Could not load tasks: {state.message}</p>
-        <button type="button" onClick={retry}>
-          Retry
-        </button>
-      </>
-    )
-  }
-
-  const visible = showCompleted ? state.tasks : state.tasks.filter((t) => t.completedAt === null)
+  const visible = showCompleted ? tasks : tasks.filter((t) => t.completedAt === null)
 
   return (
     <section>
