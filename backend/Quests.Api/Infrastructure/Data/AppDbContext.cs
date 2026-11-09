@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Quests.Api.Features.Identity;
+using Quests.Api.Features.Tasks;
 
 namespace Quests.Api.Infrastructure.Data;
 
@@ -12,6 +13,7 @@ namespace Quests.Api.Infrastructure.Data;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, CurrentUser currentUser) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     /// <summary>Owner id used by the query filter; EF Core re-evaluates it per context instance.</summary>
     private Guid? CurrentOwnerId => currentUser.Id;

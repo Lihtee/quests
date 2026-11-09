@@ -54,7 +54,7 @@ Meaning preservation: PASS
 
 ### Phase 1: Backend tasks API
 
-- [ ] Task 1: `TaskItem` model, EF configuration and migration
+- [x] Task 1: `TaskItem` model, EF configuration and migration
   - Files: `backend/Quests.Api/Features/Tasks/TaskItem.cs`, `backend/Quests.Api/Features/Tasks/TaskItemConfiguration.cs`, `backend/Quests.Api/Infrastructure/Data/AppDbContext.cs`, `backend/Quests.Api/Infrastructure/Data/Migrations/<timestamp>_AddTasks.cs` (+ Designer, snapshot)
   - `TaskItem : IOwnedEntity` (same style as `User`): `Guid Id` (`Guid.CreateVersion7(now)`), `Guid OwnerId`, `string Title`, `string? Notes`, `DateTimeOffset? DueAt`, `DateTimeOffset CreatedAt`, `DateTimeOffset UpdatedAt`, `DateTimeOffset? CompletedAt`; private EF constructor.
   - Methods take `now` as a parameter (no clock inside the model): `static Create(ownerId, title, notes, dueAt, now)`, `Update(title, notes, dueAt, now)`, `Complete(now)` (no-op if already completed), `Reopen(now)` (no-op if open). Normalize: trim title, empty notes → null, `DueAt` → UTC. Guard invariants with `ArgumentException`. Input validation for the API is in Task 2, so these guards are not expected control flow.
@@ -63,7 +63,7 @@ Meaning preservation: PASS
   - Add migration `AddTasks` with `dotnet ef` (local tool, command as in README).
   - Logging: none in the model (pure domain).
 
-- [ ] Task 2: `TaskService`, DTOs, endpoints and wiring (depends on 1)
+- [x] Task 2: `TaskService`, DTOs, endpoints and wiring (depends on 1)
   - Files: `backend/Quests.Api/Features/Tasks/TaskDtos.cs`, `backend/Quests.Api/Features/Tasks/TaskService.cs`, `backend/Quests.Api/Features/Tasks/TaskEndpoints.cs`, `backend/Quests.Api/Program.cs`
   - DTOs: `TaskRequest(string? Title, string? Notes, DateTimeOffset? DueAt)` for create and update (PUT is a full replace). `TaskResponse(Id, Title, Notes, DueAt, CompletedAt, CreatedAt, UpdatedAt)` with `From(TaskItem)`. A static `Validate(TaskRequest)` returns `Dictionary<string, string[]>` errors (title required/≤200 after trim, notes ≤4000).
   - `TaskService(AppDbContext db, CurrentUser currentUser, TimeProvider clock, ILogger<TaskService> logger)`: `ListAsync` (owner-filtered query, then in-memory sort from Defaults), `CreateAsync`, `UpdateAsync`, `CompleteAsync`, `ReopenAsync`, `DeleteAsync`. Lookups use `db.Tasks.FirstOrDefaultAsync(t => t.Id == id)` (filter applies). Missing → `null`/`false`. Missing `currentUser.Id` → `InvalidOperationException`, same as `MeEndpoints`.
@@ -77,7 +77,7 @@ Meaning preservation: PASS
   - Register `builder.Services.AddScoped<TaskService>()` and `app.MapTaskEndpoints()` in `Program.cs` before `MapQuestsStaticWeb()`.
   - Logging (verbose): Debug "Listing tasks for {UserId}: {Count}"; Information "Task {TaskId} created/updated/completed/reopened/deleted for {UserId}" (ids only); Debug "Task {TaskId} not found for {UserId}"; Debug on validation failure with the failing field names only. Never log title/notes.
 
-- [ ] Task 3: Backend tests (depends on 2)
+- [x] Task 3: Backend tests (depends on 2)
   - Files: `backend/Quests.Tests/Features/Tasks/TaskItemTests.cs`, `backend/Quests.Tests/Features/Tasks/TaskApiTests.cs`
   - `TaskItemTests` (pure): Create trims/normalizes and sets timestamps from `now`; Update changes fields and `UpdatedAt`; Complete/Reopen set/clear `CompletedAt` and are idempotent; `DueAt` is converted to UTC.
   - `TaskApiTests` (use `ApiFactory` + `TestTokens`, same as `AuthTests`): full CRUD round-trip; 400 for blank title / title > 200 / notes > 4000; sort order (dated before undated, earlier due first, completed last); 401 without token; isolation — with `ApiFactory.WithSettings` allowlisting two emails, user B gets 404 on A's task for PUT/complete/reopen/delete and B's list does not contain it.
