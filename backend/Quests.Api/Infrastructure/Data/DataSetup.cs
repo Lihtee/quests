@@ -10,6 +10,14 @@ public static class DataSetup
 
     public static IServiceCollection AddQuestsData(this IServiceCollection services, IConfiguration configuration)
     {
+        var connectionString = GetConnectionString(configuration);
+        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+        return services;
+    }
+
+    /// <summary>Reads the SQLite connection string; throws a clear error when it is missing.</summary>
+    internal static string GetConnectionString(IConfiguration configuration)
+    {
         var connectionString = configuration.GetConnectionString(ConnectionStringName);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
@@ -19,8 +27,7 @@ public static class DataSetup
                 "e.g. 'Data Source=quests.db'.");
         }
 
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-        return services;
+        return connectionString;
     }
 
     /// <summary>Applies pending EF Core migrations. Logs and rethrows on failure so startup stops.</summary>

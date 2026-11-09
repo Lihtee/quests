@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Quests.Tests.Infrastructure;
@@ -21,7 +22,10 @@ public sealed class SmokeTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task UnknownRoute_ReturnsProblemDetails404WithTraceId()
     {
+        // Every route (even unknown ones) requires auth by the fallback policy, so sign in first.
         using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", TestTokens.Create($"uid-{Guid.NewGuid():N}", ApiFactory.AllowedEmail));
 
         var response = await client.GetAsync("/api/does-not-exist");
         var body = await response.Content.ReadAsStringAsync();
