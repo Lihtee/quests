@@ -1,9 +1,46 @@
-:root {
-  font-family: system-ui, sans-serif;
-  color-scheme: light dark;
+/* Base styling comes from Pico CSS (imported in main.tsx); only app-specific rules live here. */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-body {
-  margin: 0;
-  padding: 1rem;
+.task-list {
+  padding: 0;
+}
+
+.task-list > li {
+  list-style: none;
+}
+
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.task-row__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-row__body small {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.task-row__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.task-row__actions button {
+  padding: 0.25rem 0.75rem;
+}
+
+.task-row--completed .task-row__title {
+  text-decoration: line-through;
+  opacity: 0.6;
 }

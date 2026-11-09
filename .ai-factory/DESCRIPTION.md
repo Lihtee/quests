@@ -23,6 +23,7 @@ The distinguishing idea is time-aware tasks: each task can have a **hard deadlin
 - **Backend language:** C# / .NET 10 (LTS)
 - **Backend framework:** ASP.NET Core Web API + SignalR
 - **Frontend:** React + TypeScript (Vite)
+- **Styling:** Pico CSS v2 (classless, built-in light/dark)
 - **Mobile:** Capacitor (Android) wrapping the same React app
 - **Server database:** SQLite (file on the Lightsail instance)
 - **ORM:** EF Core (SQLite provider, migrations)
@@ -57,5 +58,4 @@ Pattern: Structured Modules (simplified, modern .NET — Minimal APIs, feature f
 - "What to do now" selection algorithm.
 - Recurrence rule model (fixed day of month, every N days/weeks, etc.).
 - Conflict resolution details for offline edits.
-- UI component library / styling approach.
 - Distribution of the Android app (Play Store vs. sideloaded APK).

@@ -2,7 +2,7 @@ import { AuthGate } from './features/auth/AuthGate'
 
 function App() {
   return (
-    <main>
+    <main className="container">
       <h1>Quests</h1>
       <AuthGate />
     </main>

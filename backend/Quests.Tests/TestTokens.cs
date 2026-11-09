@@ -21,7 +21,8 @@ public static class TestTokens
         DateTime? expires = null,
         string audience = ProjectId,
         string issuer = Issuer,
-        SecurityKey? signingKey = null)
+        SecurityKey? signingKey = null,
+        bool unsigned = false)
     {
         var expiresAt = expires ?? DateTime.UtcNow.AddHours(1);
         var descriptor = new SecurityTokenDescriptor
@@ -37,7 +38,10 @@ public static class TestTokens
                 ["email"] = email,
                 ["email_verified"] = emailVerified,
             },
-            SigningCredentials = new SigningCredentials(signingKey ?? SigningKey, SecurityAlgorithms.HmacSha256),
+            // unsigned: alg "none", like Firebase Auth Emulator tokens
+            SigningCredentials = unsigned
+                ? null
+                : new SigningCredentials(signingKey ?? SigningKey, SecurityAlgorithms.HmacSha256),
         };
         return new JsonWebTokenHandler().CreateToken(descriptor);
     }

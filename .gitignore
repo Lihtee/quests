@@ -19,10 +19,14 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.emulator
 appsettings.*.local.json
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Playwright MCP snapshots/screenshots
+.playwright-mcp/
 
 # OS / editors
 .DS_Store

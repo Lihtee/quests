@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Quests.Api.Infrastructure.Auth;
@@ -7,9 +8,11 @@ namespace Quests.Api.Infrastructure.Auth;
 public static class FirebaseJwtSetup
 {
     private const string ProjectIdKey = "FIREBASE_PROJECT_ID";
+    private const string EmulatorHostKey = "FIREBASE_AUTH_EMULATOR_HOST";
     private const string LoggerCategory = "Quests.Auth";
 
-    public static IServiceCollection AddQuestsAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddQuestsAuthentication(
+        this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         var projectId = configuration[ProjectIdKey];
         if (string.IsNullOrWhiteSpace(projectId))
@@ -21,8 +24,9 @@ public static class FirebaseJwtSetup
 
         projectId = projectId.Trim();
         var issuer = $"https://securetoken.google.com/{projectId}";
+        var settings = new FirebaseAuthSettings(projectId, ReadEmulatorHost(configuration, environment));
 
-        services.AddSingleton(new FirebaseAuthSettings(projectId));
+        services.AddSingleton(settings);
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -37,6 +41,9 @@ public static class FirebaseJwtSetup
                     ValidAudience = projectId,
                     ValidateLifetime = true,
                 };
+                if (settings.UsesEmulator)
+                    UseEmulatorTokens(options);
+
                 options.Events = new JwtBearerEvents
                 {
                     OnAuthenticationFailed = context =>
@@ -62,9 +69,45 @@ public static class FirebaseJwtSetup
     public static WebApplication LogQuestsAuthenticationSettings(this WebApplication app)
     {
         var settings = app.Services.GetRequiredService<FirebaseAuthSettings>();
-        app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(LoggerCategory)
-            .LogDebug("Firebase JWT auth configured for project {ProjectId}", settings.ProjectId);
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(LoggerCategory);
+        logger.LogDebug("Firebase JWT auth configured for project {ProjectId}", settings.ProjectId);
+        if (settings.UsesEmulator)
+        {
+            logger.LogWarning(
+                "Auth emulator mode: accepting unsigned tokens from the Firebase Auth Emulator at {EmulatorHost}",
+                settings.EmulatorHost);
+        }
+
         return app;
+    }
+
+    /// <summary>
+    /// Returns <c>FIREBASE_AUTH_EMULATOR_HOST</c> when set. Emulator mode trusts unsigned tokens,
+    /// so it is refused outside Development.
+    /// </summary>
+    private static string? ReadEmulatorHost(IConfiguration configuration, IHostEnvironment environment)
+    {
+        var host = configuration[EmulatorHostKey];
+        if (string.IsNullOrWhiteSpace(host))
+            return null;
+
+        if (!environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                $"'{EmulatorHostKey}' is set, but the environment is '{environment.EnvironmentName}'. " +
+                "The Firebase Auth Emulator accepts unsigned tokens and is allowed only in Development; unset it.");
+        }
+
+        return host.Trim();
+    }
+
+    /// <summary>Emulator ID tokens are unsigned: skip signature checks and the OpenID metadata download.</summary>
+    private static void UseEmulatorTokens(JwtBearerOptions options)
+    {
+        options.Authority = null;
+        options.TokenValidationParameters.RequireSignedTokens = false;
+        options.TokenValidationParameters.ValidateIssuerSigningKey = false;
+        options.TokenValidationParameters.SignatureValidator = (token, _) => new JsonWebToken(token);
     }
 
     private static ILogger CreateLogger(HttpContext httpContext) =>

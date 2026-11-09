@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import { connectAuthEmulator, getAuth } from 'firebase/auth'
 
 declare global {
   interface ImportMetaEnv {
@@ -7,10 +7,13 @@ declare global {
     readonly VITE_FIREBASE_AUTH_DOMAIN: string
     readonly VITE_FIREBASE_PROJECT_ID: string
     readonly VITE_FIREBASE_APP_ID: string
+    /** "1" = use the local Firebase Auth Emulator (dev only; see .env.emulator). */
+    readonly VITE_USE_AUTH_EMULATOR?: string
   }
 }
 
 const env = import.meta.env
+const authEmulatorUrl = 'http://127.0.0.1:9099'
 
 const app = initializeApp({
   apiKey: env.VITE_FIREBASE_API_KEY,
@@ -20,3 +23,8 @@ const app = initializeApp({
 })
 
 export const auth = getAuth(app)
+
+if (env.DEV && env.VITE_USE_AUTH_EMULATOR === '1') {
+  console.debug('[firebase] using Auth Emulator', { url: authEmulatorUrl })
+  connectAuthEmulator(auth, authEmulatorUrl)
+}

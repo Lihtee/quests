@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddQuestsLogging();
 builder.Services.AddQuestsProblemDetails();
 builder.Services.AddQuestsData(builder.Configuration);
-builder.Services.AddQuestsAuthentication(builder.Configuration);
+builder.Services.AddQuestsAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddQuestsAuthorization(builder.Configuration);
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<TaskService>();

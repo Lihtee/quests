@@ -1,12 +1,13 @@
 import { auth } from '../features/auth/firebase'
 
-/** RFC 7807 ProblemDetails body returned by the API on errors. */
+/** RFC 7807 ProblemDetails body returned by the API on errors (`errors` is set for validation problems). */
 export interface ProblemDetails {
   type?: string
   title?: string
   status?: number
   detail?: string
   traceId?: string
+  errors?: Record<string, string[]>
 }
 
 export class ApiError extends Error {
@@ -21,20 +22,39 @@ export class ApiError extends Error {
   }
 }
 
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
 /** GET an API path with the signed-in user's Firebase ID token. Throws ApiError on non-2xx. */
 export async function apiGet<T>(path: string): Promise<T> {
+  return (await request('GET', path)) as T
+}
+
+/** POST/PUT/DELETE an API path with an optional JSON body. Resolves to undefined for 204. Throws ApiError on non-2xx. */
+export async function apiSend<T>(method: Exclude<Method, 'GET'>, path: string, body?: unknown): Promise<T> {
+  return (await request(method, path, body)) as T
+}
+
+async function request(method: Method, path: string, body?: unknown): Promise<unknown> {
   const user = auth.currentUser
   if (!user) throw new ApiError(401, null)
 
   const token = await user.getIdToken()
-  const response = await fetch(path, { headers: { Authorization: `Bearer ${token}` } })
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+
+  const response = await fetch(path, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
 
   if (import.meta.env.DEV) {
-    console.debug('[api] GET', { path, status: response.status })
+    console.debug(`[api] ${method}`, { method, path, status: response.status })
   }
 
   if (!response.ok) throw new ApiError(response.status, await readProblem(response))
-  return (await response.json()) as T
+  if (response.status === 204) return undefined
+  return await response.json()
 }
 
 async function readProblem(response: Response): Promise<ProblemDetails | null> {

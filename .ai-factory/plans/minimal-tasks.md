@@ -86,14 +86,14 @@ Meaning preservation: PASS
 
 ### Phase 2: Web UI
 
-- [ ] Task 4: Pico CSS and API write helper
+- [x] Task 4: Pico CSS and API write helper
   - Files: `frontend/package.json`, `frontend/src/main.tsx`, `frontend/src/index.css`, `frontend/src/App.tsx`, `frontend/src/shared/api.ts`
   - Add dependency `@picocss/pico` (v2) and import `@picocss/pico/css/pico.min.css` in `main.tsx` before `index.css`. Remove Vite template styles from `index.css` that conflict with Pico. Keep only small app-specific rules (for example struck-through completed rows).
   - `App.tsx`: wrap content in `<main className="container">`.
   - `api.ts`: move shared logic into a private `request(method, path, body?)` (token, JSON body, `ApiError` with ProblemDetails). Keep `apiGet<T>` and add `apiSend<T>(method: 'POST' | 'PUT' | 'DELETE', path, body?)` that returns `undefined` for 204.
   - Logging: keep the existing DEV-only `console.debug('[api] …', { method, path, status })`. Never log bodies.
 
-- [ ] Task 5: Tasks feature UI (depends on 2, 4)
+- [x] Task 5: Tasks feature UI (depends on 2, 4)
   - Files: `frontend/src/features/tasks/tasksApi.ts`, `frontend/src/features/tasks/dateTime.ts`, `frontend/src/features/tasks/TaskForm.tsx`, `frontend/src/features/tasks/TaskRow.tsx`, `frontend/src/features/tasks/TasksPage.tsx`, `frontend/src/features/auth/AuthGate.tsx`
   - `tasksApi.ts`: `Task` type matching `TaskResponse`; `listTasks`, `createTask`, `updateTask`, `completeTask`, `reopenTask`, `deleteTask` on top of `apiGet`/`apiSend`.
   - `dateTime.ts`: `toLocalInputValue(iso | null)` / `fromLocalInputValue(value)` (empty → null; else `new Date(value).toISOString()`), `formatDue(iso | null)` (local, short; "—" when null).
@@ -104,14 +104,23 @@ Meaning preservation: PASS
   - Logging: DEV-only `console.error('[tasks] … failed', error)` on failed calls. No task content in logs.
   - Verify: `npm run lint` and `npm run build` in `frontend/` pass. Manual: run the API and `npm run dev`, sign in, then create (with and without due date), edit inline, complete, toggle "Show completed", reopen, delete. Check the sort order. Reload and confirm the data persisted. Sign in as a second allowlisted account and confirm the first account's tasks are not visible.
 
+- [x] Task 6: Firebase Auth Emulator for local end-to-end testing (added 2026-11-09 at user request; depends on 5)
+  - Goal: sign in locally (and from Playwright) with fake Google accounts, without a real Google login. Then run Task 5's manual scenario in a browser.
+  - Files: `frontend/package.json` (devDependency `firebase-tools`, scripts `emulators` and `dev:emulator`), `frontend/firebase.json` (auth emulator on port 9099, UI off), `frontend/.firebaserc` (default project = the existing Firebase project id), `frontend/.env.emulator` (`VITE_USE_AUTH_EMULATOR=1`), `.gitignore` (`!.env.emulator`), `frontend/src/features/auth/firebase.ts`, `backend/Quests.Api/Infrastructure/Auth/FirebaseJwtSetup.cs`, `backend/Quests.Api/Program.cs`, `backend/Quests.Api/Properties/launchSettings.json` (profile `emulator`), `backend/Quests.Tests/TestTokens.cs`, `backend/Quests.Tests/Features/Identity/AuthEmulatorTests.cs`
+  - Frontend: when `import.meta.env.DEV` and `VITE_USE_AUTH_EMULATOR === '1'`, call `connectAuthEmulator(auth, 'http://127.0.0.1:9099')`. `dev:emulator` = `vite --mode emulator`.
+  - Backend: when `FIREBASE_AUTH_EMULATOR_HOST` is set, accept unsigned emulator tokens (no signing key, no OpenID metadata download) and keep issuer/audience/lifetime validation. Allowed only in the Development environment: in any other environment the API refuses to start. Logs a Warning at startup while emulator mode is on.
+  - Tests: Development + emulator host → an unsigned token reaches `/api/me` (200). Emulator host outside Development → startup throws. Without the emulator host, an unsigned token → 401 (existing behavior).
+  - Logging: Warning "Auth emulator mode: accepting unsigned tokens"; existing Debug auth-failure logs unchanged.
+  - Verify: `dotnet test backend/Quests.slnx`; `npm run lint` and `npm run build`; then run the emulator, the API (`--launch-profile emulator`) and `npm run dev:emulator`, and use Playwright for Task 5's manual scenario, including second-account isolation.
+
 ### Phase 3: Documentation
 
-- [ ] Task 6: Docs checkpoint (depends on 3, 5)
+- [ ] Task 7: Docs checkpoint (depends on 3, 6)
   - Files: `README.md`, `AGENTS.md`
-  - Run `/aif-docs`: in README, document the tasks API endpoints and the Pico CSS styling choice. In AGENTS.md, add `Features/Tasks/` and `frontend/src/features/tasks/` to the structure map and update the "Project Structure" summary line.
+  - Run `/aif-docs`: in README, document the tasks API endpoints, the Pico CSS styling choice, and local testing with the Firebase Auth Emulator (Java 21 required for `firebase-tools`; how to start the emulator, the API and the frontend in emulator mode). In AGENTS.md, add `Features/Tasks/` and `frontend/src/features/tasks/` to the structure map and update the "Project Structure" summary line.
   - Logging: n/a.
 
 ## Commit Plan
 1. After Tasks 1–3: `feat(tasks): add tasks API with owner-scoped CRUD`
-2. After Tasks 4–5: `feat(tasks): add task list UI with Pico CSS`
-3. After Task 6: `docs: document tasks API and UI`
+2. After Tasks 4–6: `feat(tasks): add task list UI with Pico CSS`
+3. After Task 7: `docs: document tasks API and UI`

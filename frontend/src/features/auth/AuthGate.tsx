@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ApiError, apiGet } from '../../shared/api'
+import { TasksPage } from '../tasks/TasksPage'
 import { useAuth } from './useAuth'
 
 interface Me {
@@ -72,8 +73,11 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
     case 'ok':
       return (
         <>
-          <p>Hello, {state.me.email}</p>
-          {signOutButton}
+          <header className="app-header">
+            <span>{state.me.email}</span>
+            {signOutButton}
+          </header>
+          <TasksPage />
         </>
       )
     case 'not-invited':
