@@ -16,6 +16,8 @@ builder.Services.AddQuestsAuthentication(builder.Configuration, builder.Environm
 builder.Services.AddQuestsAuthorization(builder.Configuration);
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<SyncService>();
+builder.Services.AddSingleton<SyncNotifier>();
+builder.Services.AddSignalR();
 builder.Services.TryAddSingleton(TimeProvider.System);
 builder.Services.AddHealthChecks();
 
@@ -35,6 +37,7 @@ app.UseMiddleware<UserProvisioningMiddleware>();
 app.MapHealthChecks("/api/health").AllowAnonymous();
 app.MapMeEndpoints();
 app.MapSyncEndpoints();
+app.MapHub<SyncHub>(SyncHub.Path);
 app.MapQuestsStaticWeb();
 
 await app.RunAsync();

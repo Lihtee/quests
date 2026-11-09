@@ -10,6 +10,8 @@ public static class FirebaseJwtSetup
     private const string ProjectIdKey = "FIREBASE_PROJECT_ID";
     private const string EmulatorHostKey = "FIREBASE_AUTH_EMULATOR_HOST";
     private const string LoggerCategory = "Quests.Auth";
+    private const string HubPathPrefix = "/api/hubs";
+    private const string HubTokenQueryKey = "access_token";
 
     public static IServiceCollection AddQuestsAuthentication(
         this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
@@ -46,6 +48,20 @@ public static class FirebaseJwtSetup
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // Browsers cannot set headers on WebSockets, so SignalR sends the token in the query.
+                        // Accepted only for hub paths; never log the query string.
+                        var token = context.Request.Query[HubTokenQueryKey].ToString();
+                        if (token.Length > 0 && context.Request.Path.StartsWithSegments(HubPathPrefix))
+                        {
+                            context.Token = token;
+                            CreateLogger(context.HttpContext).LogDebug(
+                                "Token taken from query for {RequestPath}", context.Request.Path);
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnAuthenticationFailed = context =>
                     {
                         CreateLogger(context.HttpContext).LogDebug(

@@ -10,14 +10,16 @@ namespace Quests.Api.Features.Sync;
 /// client's version. Changes carry only the fields they changed, so concurrent edits merge per field (last
 /// arrival wins per field). A delete wins only if the device had seen the latest version. Never logs task content.
 /// </summary>
-public sealed class SyncService(AppDbContext db, CurrentUser currentUser, TimeProvider clock, ILogger<SyncService> logger)
+public sealed class SyncService(
+    AppDbContext db, CurrentUser currentUser, SyncNotifier notifier, TimeProvider clock, ILogger<SyncService> logger)
 {
     private enum Outcome { Applied, Ignored, Rejected, NoOp }
 
     private Guid UserId => currentUser.Id
         ?? throw new InvalidOperationException("CurrentUser is not set for an authorized request.");
 
-    public async Task<SyncResponse> SyncAsync(SyncRequest request, CancellationToken ct)
+    /// <param name="senderConnectionId">The caller's SignalR connection, skipped by the "changed" signal.</param>
+    public async Task<SyncResponse> SyncAsync(SyncRequest request, string? senderConnectionId, CancellationToken ct)
     {
         var userId = UserId;
         var changes = request.Changes ?? [];
@@ -42,6 +44,12 @@ public sealed class SyncService(AppDbContext db, CurrentUser currentUser, TimePr
         logger.LogInformation(
             "Sync for {UserId}: {Applied} applied, {Ignored} ignored, {Rejected} rejected, {Returned} returned, version {Version}",
             userId, batch.Applied, batch.Ignored, batch.Rejected.Count, tasks.Length, version);
+
+        if (batch.Applied > 0)
+            await notifier.NotifyChangedAsync(userId, senderConnectionId, ct);
+        else
+            logger.LogDebug("No signal for {UserId}: nothing applied", userId);
+
         return new SyncResponse(version, tasks, [.. batch.Rejected]);
     }
 
