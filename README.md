@@ -49,7 +49,7 @@ To test without a real Google login (fake accounts, browser automation), use the
 | `npm run build` (in `frontend/`) | Frontend type check and production build |
 | `npm test` (in `frontend/`) | Frontend Vitest tests (task rules, sync engine on an in-memory IndexedDB) |
 
-CI runs the backend tests, lint and build on every push and pull request to `main` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)). It does not run `npm test` yet.
+CI runs the same checks on every push and pull request to `main` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Configuration
 
