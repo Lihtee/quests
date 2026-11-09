@@ -2,7 +2,7 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date) that works offline and syncs between devices. The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date) that works offline and syncs between devices (open devices update within seconds). The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
 
 ## Prerequisites
 
@@ -123,6 +123,10 @@ Rules:
 
 Each user has a version counter. Every applied change gives the task the next number.
 
+### Real-Time Updates
+
+While the page is visible, the app keeps a SignalR connection to `/api/hubs/sync` (same auth as the API; the browser sends the Firebase ID token in the `access_token` query, which the API accepts only for `/api/hubs/*`). The hub is a "doorbell": after a sync that applied at least one change, the server sends `changed` (no data) to the user's other connections, and they run a sync at once. The app sends its connection id in the `X-Sync-Connection-Id` header of `POST /api/sync`, so the device that made the change is not signalled. The connection closes when the page is hidden and opens again (with a catch-up sync) when it becomes visible. A missed signal is harmless: the other sync triggers still run.
+
 ## Database Migrations
 
 Run these from `backend/` so that `backend/nuget.config` applies:
@@ -145,9 +149,9 @@ Every push to `main` builds a Docker image and deploys it to AWS Lightsail behin
 
 | Path | Contents |
 |------|----------|
-| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, task model in `Features/Tasks/`, `POST /api/sync` in `Features/Sync/` |
+| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, task model in `Features/Tasks/`, `POST /api/sync` and the SignalR hub in `Features/Sync/` |
 | `backend/Quests.Tests` | xUnit tests |
-| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list and local writes in `src/features/tasks/`, sync engine in `src/features/sync/`, pure task rules in `src/domain/`, Dexie schema in `src/shared/db.ts`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
+| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list and local writes in `src/features/tasks/`, sync engine and SignalR client in `src/features/sync/`, pure task rules in `src/domain/`, Dexie schema in `src/shared/db.ts`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
 | `.github/workflows/` | CI and deploy |
 | `Dockerfile`, `.dockerignore` | Production image (API + React build) |
 | `deploy/` | Compose stack and Caddyfile used on the instance |

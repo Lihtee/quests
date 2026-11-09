@@ -58,6 +58,18 @@ Use two browser contexts signed in as the same account (A and B) and one context
 
 While offline, the browser console shows `[sync] failed { status: undefined }`, and the change stays in the IndexedDB `outbox` table of `quests-<uid>` until a sync succeeds.
 
+## Real-Time Check
+
+Open the app in two tabs or windows (A and B) signed in as the same account. Keep both visible (for example, side by side).
+
+| Check | Steps | Expected |
+|-------|-------|----------|
+| Live update | Create, edit, complete or delete a task in A. | B shows the change within a few seconds, without focus or a reload. |
+| Hidden tab | Switch B to another tab. Edit a task in A. Switch back to B. | B updates as soon as it is visible (catch-up sync on reconnect). |
+| No echo | Edit a task in A. | In DEV, A's console shows no `[signal] changed` for its own change; B's does. |
+
+The Vite dev server proxies the hub's WebSocket (`/api` with `ws: true`).
+
 ## See Also
 
 - [README](../README.md): Quick Start, configuration, authentication

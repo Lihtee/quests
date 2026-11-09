@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (React UI with Pico CSS) + offline-first sync (Dexie store + outbox in the browser, `POST /api/sync` with per-field merge and tombstones) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (React UI with Pico CSS) + offline-first sync (Dexie store + outbox in the browser, `POST /api/sync` with per-field merge and tombstones) + real-time updates (SignalR "doorbell" hub, client connected while visible) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -27,21 +27,21 @@ quests/
 │   │   ├── Features/
 │   │   │   ├── Identity/             # User, allowlist policy, CurrentUser, provisioning middleware, GET /api/me
 │   │   │   ├── Tasks/                # TaskItem (domain, versions, soft delete), TaskFields, TaskValidation, EF config
-│   │   │   └── Sync/                 # SyncDtos, SyncService (per-field merge, preserve-beats-delete), POST /api/sync
+│   │   │   └── Sync/                 # SyncDtos, SyncService (per-field merge, preserve-beats-delete), POST /api/sync, SyncHub + SyncNotifier (SignalR doorbell at /api/hubs/sync)
 │   │   └── Infrastructure/
 │   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID; FIREBASE_AUTH_EMULATOR_HOST, Development only)
 │   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
 │   │       ├── Logging/              # JSON logging: console or LOG_FILE (NReco.Logging.File), LOG_LEVEL
 │   │       └── Web/                  # Static React build from wwwroot + SPA fallback
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, task model, sync API, static web, file logging)
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, task model, sync API, sync hub, static web, file logging)
 ├── frontend/                         # React + TypeScript (Vite), Pico CSS, oxlint, Vitest (npm test)
 │   ├── firebase.json, .firebaserc    # Firebase Auth Emulator config (npm run emulators)
 │   ├── .env.emulator                 # VITE_USE_AUTH_EMULATOR=1 for npm run dev:emulator
 │   └── src/                          # main.tsx, App.tsx, index.css
 │       ├── features/auth/            # Firebase client (+ emulator hookup), useAuth, AuthGate (sign-in UI)
 │       ├── features/tasks/           # taskStore (local writes + outbox), dateTime helpers, TaskForm, TaskRow, TasksPage (liveQuery)
-│       ├── features/sync/            # syncEngine (push outbox, pull, merge), useSync (triggers)
+│       ├── features/sync/            # syncEngine (push outbox, pull, merge), syncSignal (SignalR doorbell while visible), useSync (triggers)
 │       ├── domain/                   # Pure rules: taskRules (sort, validate, normalize)
 │       ├── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token
 │       ├── shared/db.ts              # Dexie schema per user (tasks, outbox, meta)
