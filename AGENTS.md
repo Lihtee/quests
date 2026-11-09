@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (owner-scoped CRUD API, online-only React UI with Pico CSS) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -25,20 +25,24 @@ quests/
 │   ├── Quests.Api/                   # ASP.NET Core Minimal API
 │   │   ├── Program.cs                # Composition root
 │   │   ├── Features/
-│   │   │   └── Identity/             # User, allowlist policy, CurrentUser, provisioning middleware, GET /api/me
+│   │   │   ├── Identity/             # User, allowlist policy, CurrentUser, provisioning middleware, GET /api/me
+│   │   │   └── Tasks/                # TaskItem (domain), EF config, DTOs + validation, TaskService, /api/tasks endpoints
 │   │   └── Infrastructure/
-│   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID)
+│   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID; FIREBASE_AUTH_EMULATOR_HOST, Development only)
 │   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
 │   │       ├── Logging/              # JSON logging: console or LOG_FILE (NReco.Logging.File), LOG_LEVEL
 │   │       └── Web/                  # Static React build from wwwroot + SPA fallback
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, static web, file logging)
-├── frontend/                         # React + TypeScript (Vite), oxlint
-│   └── src/                          # main.tsx, App.tsx
-│       ├── features/auth/            # Firebase client, useAuth, AuthGate (sign-in UI)
-│       └── shared/api.ts             # Fetch wrapper with Firebase ID token
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, tasks, static web, file logging)
+├── frontend/                         # React + TypeScript (Vite), Pico CSS, oxlint
+│   ├── firebase.json, .firebaserc    # Firebase Auth Emulator config (npm run emulators)
+│   ├── .env.emulator                 # VITE_USE_AUTH_EMULATOR=1 for npm run dev:emulator
+│   └── src/                          # main.tsx, App.tsx, index.css
+│       ├── features/auth/            # Firebase client (+ emulator hookup), useAuth, AuthGate (sign-in UI)
+│       ├── features/tasks/           # tasksApi, dateTime helpers, TaskForm, TaskRow, TasksPage
+│       └── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token
 ├── deploy/                           # compose.yml (api + Caddy) and Caddyfile, uploaded to the instance by CI
-├── docs/                             # Detailed documentation (deployment.md)
+├── docs/                             # Detailed documentation (local-testing.md, deployment.md)
 ├── Dockerfile                        # Production image: API + React build in wwwroot
 ├── .dockerignore
 ├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build, deploy on push to main
@@ -69,7 +73,8 @@ quests/
 
 | Document | Path | Description |
 |----------|------|-------------|
-| README | README.md | Setup, run, tests, config, auth, migrations |
+| README | README.md | Setup, run, tests, config, auth, tasks API, migrations |
+| Local Testing | docs/local-testing.md | Firebase Auth Emulator: fake sign-in, Playwright |
 | Deployment | docs/deployment.md | Lightsail setup, GitHub secrets, operations, rollback |
 
 ## AI Context Files

@@ -1,4 +1,4 @@
-[Back to README](../README.md)
+[← Local Testing](local-testing.md) · [Back to README](../README.md)
 
 # Deployment
 
@@ -94,3 +94,4 @@ Run on the instance from `~/quests` (Compose picks up `compose.yml` and `.env` t
 ## See Also
 
 - [README](../README.md) — local development, configuration, authentication
+- [Local Testing](local-testing.md) — run the app with the Firebase Auth Emulator

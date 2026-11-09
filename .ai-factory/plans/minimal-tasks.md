@@ -115,7 +115,7 @@ Meaning preservation: PASS
 
 ### Phase 3: Documentation
 
-- [ ] Task 7: Docs checkpoint (depends on 3, 6)
+- [x] Task 7: Docs checkpoint (depends on 3, 6)
   - Files: `README.md`, `AGENTS.md`
   - Run `/aif-docs`: in README, document the tasks API endpoints, the Pico CSS styling choice, and local testing with the Firebase Auth Emulator (Java 21 required for `firebase-tools`; how to start the emulator, the API and the frontend in emulator mode). In AGENTS.md, add `Features/Tasks/` and `frontend/src/features/tasks/` to the structure map and update the "Project Structure" summary line.
   - Logging: n/a.

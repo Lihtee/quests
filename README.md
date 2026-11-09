@@ -2,12 +2,13 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, and automatic deployment to AWS Lightsail.
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date; online-only for now). The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
 
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Node.js 24](https://nodejs.org/) (LTS) with npm
+- Java 21: optional, only for local testing with the Firebase Auth Emulator ([docs/local-testing.md](docs/local-testing.md))
 
 ## Quick Start
 
@@ -35,7 +36,9 @@ npm install
 npm run dev
 ```
 
-The Vite dev server forwards `/api` requests to the API at `http://localhost:5080`. Open the app and sign in with Google. An allowlisted account sees "Hello, &lt;email&gt;". Any other account sees "You are not invited".
+The Vite dev server forwards `/api` requests to the API at `http://localhost:5080`. Open the app and sign in with Google. An allowlisted account sees its task list. Any other account sees "You are not invited".
+
+To test without a real Google login (fake accounts, browser automation), use the Firebase Auth Emulator: see [docs/local-testing.md](docs/local-testing.md).
 
 ## Tests and Checks
 
@@ -81,7 +84,22 @@ How the API handles requests:
 | Valid token, but email not verified or not in `ALLOWED_EMAILS` | `403` ProblemDetails |
 | Valid token with a verified, allowlisted email | Request proceeds; `GET /api/me` returns `{ "id", "email" }` |
 
-Every route except `/api/health` requires sign-in. On the first allowed request, the API creates a user row; user data will be scoped by that `id`. Error bodies are RFC 7807 ProblemDetails (`application/problem+json`).
+Every route except `/api/health` requires sign-in. On the first allowed request, the API creates a user row; user data is scoped by that `id`. Error bodies are RFC 7807 ProblemDetails (`application/problem+json`).
+
+## Tasks API
+
+All endpoints act only on the signed-in user's tasks; another user's task id returns `404`. Body for create/update: `{ "title", "notes", "dueAt" }` (title required, ≤ 200 chars after trimming; notes ≤ 4000; `dueAt` optional ISO 8601, stored as UTC).
+
+| Endpoint | Success | Errors |
+|----------|---------|--------|
+| `GET /api/tasks` | `200` all tasks: open first (earliest due first, undated last), then completed (newest first) | `401` |
+| `POST /api/tasks` | `201` task + `Location` | `400` validation, `401` |
+| `PUT /api/tasks/{id}` | `200` task (full replace) | `400`, `401`, `404` |
+| `POST /api/tasks/{id}/complete` | `200` task | `401`, `404` |
+| `POST /api/tasks/{id}/reopen` | `200` task | `401`, `404` |
+| `DELETE /api/tasks/{id}` | `204` (hard delete) | `401`, `404` |
+
+A task is `{ "id", "title", "notes", "dueAt", "completedAt", "createdAt", "updatedAt" }`.
 
 ## Database Migrations
 
@@ -105,11 +123,11 @@ Every push to `main` builds a Docker image and deploys it to AWS Lightsail behin
 
 | Path | Contents |
 |------|----------|
-| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/` |
+| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, tasks in `Features/Tasks/` |
 | `backend/Quests.Tests` | xUnit tests |
-| `frontend/` | React + TypeScript (Vite) app; sign-in in `src/features/auth/`, API client in `src/shared/api.ts` |
+| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list in `src/features/tasks/`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
 | `.github/workflows/` | CI and deploy |
 | `Dockerfile`, `.dockerignore` | Production image (API + React build) |
 | `deploy/` | Compose stack and Caddyfile used on the instance |
-| `docs/` | Detailed documentation ([deployment](docs/deployment.md)) |
+| `docs/` | Detailed documentation ([local testing](docs/local-testing.md), [deployment](docs/deployment.md)) |
 | `.config/dotnet-tools.json` | Local .NET tools (`dotnet-ef`) |
