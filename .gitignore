@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+
+# Node / Vite
+node_modules/
+dist/
+*.local
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
