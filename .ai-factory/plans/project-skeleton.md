@@ -74,14 +74,14 @@ These are small infrastructure choices made to keep the skeleton verifiable.
   - Verify: `dotnet test backend/Quests.slnx` passes; `dotnet run --project backend/Quests.Api` then `curl http://localhost:5080/api/health` returns `Healthy`; with `LOG_LEVEL=Debug` the JSON logs show Debug lines.
 
 ### Phase 3: Frontend skeleton
-- [ ] Task 6: React + Vite + TypeScript app (independent of 1–5)
+- [x] Task 6: React + Vite + TypeScript app (independent of 1–5)
   - `npm create vite@latest frontend -- --template react-ts`, then `npm install`; commit `package-lock.json`.
   - Remove demo content (counter, logos, demo CSS); `App.tsx` renders a plain "Quests" placeholder heading.
   - Create `src/features/`, `src/domain/`, `src/shared/` only when they get files — none in this task.
   - `vite.config.ts`: dev server proxy `/api` → `http://localhost:5080`.
-  - Keep the ESLint config from the template; `npm run lint` and `npm run build` must pass.
+  - Keep the linter from the template (create-vite 9 ships oxlint, kept per user decision); `npm run lint` and `npm run build` must pass.
   - Logging: none in this task (frontend rule: minimal `console` logging in development only).
-  - Files: `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/eslint.config.js`, `frontend/tsconfig*.json`
+  - Files: `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/.oxlintrc.json`, `frontend/tsconfig*.json`
 
 ### Phase 4: CI
 - [ ] Task 7: GitHub Actions workflow (depends on 5, 6)
