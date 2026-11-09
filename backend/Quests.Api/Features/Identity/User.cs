@@ -8,6 +8,9 @@ public sealed class User
     public string Email { get; private set; } = "";
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>Per-user change counter; every applied task change takes the next value.</summary>
+    public long SyncVersion { get; private set; }
+
     private User() { } // EF Core
 
     public static User Create(string firebaseUid, string email, DateTimeOffset now)

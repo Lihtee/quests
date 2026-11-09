@@ -2,7 +2,10 @@ using Quests.Api.Infrastructure.Data;
 
 namespace Quests.Api.Features.Tasks;
 
-/// <summary>A user's task with an optional due date. Pure domain: the caller passes the current time.</summary>
+/// <summary>
+/// A user's task with an optional due date. Pure domain: the caller passes the current time and the
+/// sync version. Deletes are soft (tombstone) so a later edit can restore the task with its data.
+/// </summary>
 public sealed class TaskItem : IOwnedEntity
 {
     public const int TitleMaxLength = 200;
@@ -16,56 +19,69 @@ public sealed class TaskItem : IOwnedEntity
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    /// <summary>The owner's sync version at the last applied change.</summary>
+    public long Version { get; private set; }
 
     public bool IsCompleted => CompletedAt is not null;
+    public bool IsDeleted => DeletedAt is not null;
 
     private TaskItem() { } // EF Core
 
-    public static TaskItem Create(Guid ownerId, string title, string? notes, DateTimeOffset? dueAt, DateTimeOffset now)
+    /// <summary>Creates a task with a client-generated id. <paramref name="fields"/> must include the title.</summary>
+    public static TaskItem Create(
+        Guid id, Guid ownerId, TaskFields fields, DateTimeOffset createdAt, long version, DateTimeOffset now)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException("Task id is required.", nameof(id));
         if (ownerId == Guid.Empty)
             throw new ArgumentException("Owner id is required.", nameof(ownerId));
+        if (!fields.Has(TaskFields.TitleField))
+            throw new ArgumentException("A new task needs a title.", nameof(fields));
 
         var task = new TaskItem
         {
-            Id = Guid.CreateVersion7(now),
+            Id = id,
             OwnerId = ownerId,
-            CreatedAt = now,
+            CreatedAt = createdAt.ToUniversalTime(),
         };
-        task.Update(title, notes, dueAt, now);
+        task.Apply(fields, version, now);
         return task;
     }
 
-    /// <summary>Replaces the editable fields.</summary>
-    public void Update(string title, string? notes, DateTimeOffset? dueAt, DateTimeOffset now)
+    /// <summary>
+    /// Applies the listed fields and keeps the others. Restores the task when it was deleted.
+    /// Validates everything before changing anything.
+    /// </summary>
+    public void Apply(TaskFields fields, long version, DateTimeOffset now)
     {
-        Title = NormalizeTitle(title);
-        Notes = NormalizeNotes(notes);
-        DueAt = dueAt?.ToUniversalTime();
+        var title = fields.Has(TaskFields.TitleField) ? NormalizeTitle(fields.Title) : Title;
+        var notes = fields.Has(TaskFields.NotesField) ? NormalizeNotes(fields.Notes) : Notes;
+        var dueAt = fields.Has(TaskFields.DueAtField) ? fields.DueAt?.ToUniversalTime() : DueAt;
+        var completedAt = fields.Has(TaskFields.CompletedAtField) ? fields.CompletedAt?.ToUniversalTime() : CompletedAt;
+
+        Title = title;
+        Notes = notes;
+        DueAt = dueAt;
+        CompletedAt = completedAt;
+        DeletedAt = null;
+        Version = version;
         UpdatedAt = now;
     }
 
-    /// <summary>Marks the task completed; no-op when already completed.</summary>
-    public void Complete(DateTimeOffset now)
+    /// <summary>Marks the task deleted (tombstone); no-op when already deleted.</summary>
+    public void MarkDeleted(long version, DateTimeOffset now)
     {
-        if (IsCompleted)
+        if (IsDeleted)
             return;
 
-        CompletedAt = now;
+        DeletedAt = now;
+        Version = version;
         UpdatedAt = now;
     }
 
-    /// <summary>Marks the task open again; no-op when already open.</summary>
-    public void Reopen(DateTimeOffset now)
-    {
-        if (!IsCompleted)
-            return;
-
-        CompletedAt = null;
-        UpdatedAt = now;
-    }
-
-    private static string NormalizeTitle(string title)
+    private static string NormalizeTitle(string? title)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         var trimmed = title.Trim();

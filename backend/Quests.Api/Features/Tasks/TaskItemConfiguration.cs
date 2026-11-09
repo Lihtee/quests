@@ -16,11 +16,12 @@ public sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.Property(t => t.CreatedAt).IsRequired();
         builder.Property(t => t.UpdatedAt).IsRequired();
         builder.Ignore(t => t.IsCompleted);
+        builder.Ignore(t => t.IsDeleted);
 
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(t => t.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
-        builder.HasIndex(t => t.OwnerId);
+        builder.HasIndex(t => new { t.OwnerId, t.Version });
     }
 }

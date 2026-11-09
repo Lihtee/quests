@@ -35,6 +35,9 @@ namespace Quests.Api.Infrastructure.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("SyncVersion")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FirebaseUid")
@@ -52,6 +55,9 @@ namespace Quests.Api.Infrastructure.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("DueAt")
@@ -72,9 +78,12 @@ namespace Quests.Api.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("Version")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("OwnerId", "Version");
 
                     b.ToTable("Tasks", (string)null);
                 });
