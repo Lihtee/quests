@@ -10,7 +10,7 @@
 
 - [x] **Project skeleton** — .NET 10 API (Minimal APIs, feature folders), React+Vite app, EF Core + SQLite, ProblemDetails, structured logging, GitHub Actions CI
 - [x] **Auth & accounts** — Firebase Google sign-in, API validates the JWT, email allowlist, all data scoped by user id
-- [ ] **Deployment** — single service on Lightsail serving API + static web over HTTPS, env-var secrets, off-instance SQLite backups, CI deploys on merge; shows a signed-in "hello" page
+- [ ] **Deployment** — single service on Lightsail serving API + static web over HTTPS, env-var secrets, CI deploys on merge; shows a signed-in "hello" page
 
 ### Features
 
@@ -23,6 +23,7 @@
 - [ ] **Recurring tasks** — recurrence rules; each occurrence gets its own deadlines and window
 - [ ] **"What to do now"** — the button and its selection algorithm
 - [ ] **Organization** — grouping/hierarchy and tags
+- [ ] **Backups** — off-instance SQLite backups of the production database
 
 ## Completed
 
