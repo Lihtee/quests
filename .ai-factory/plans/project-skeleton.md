@@ -84,7 +84,7 @@ These are small infrastructure choices made to keep the skeleton verifiable.
   - Files: `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/.oxlintrc.json`, `frontend/tsconfig*.json`
 
 ### Phase 4: CI
-- [ ] Task 7: GitHub Actions workflow (depends on 5, 6)
+- [x] Task 7: GitHub Actions workflow (depends on 5, 6)
   - `.github/workflows/ci.yml`, triggers: `push` and `pull_request` on `main`.
   - Job `backend` (ubuntu-latest): `actions/setup-dotnet` with `10.0.x`, `dotnet restore`, `dotnet build --no-restore -c Release`, `dotnet test --no-build -c Release` on `backend/Quests.slnx`.
   - Job `frontend` (ubuntu-latest, `working-directory: frontend`): `actions/setup-node` with Node 24 LTS and npm cache, `npm ci`, `npm run lint`, `npm run build`.
