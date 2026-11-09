@@ -92,7 +92,7 @@ These are small infrastructure choices made to keep the skeleton verifiable.
   - Files: `.github/workflows/ci.yml`
 
 ### Phase 5: Documentation
-- [ ] Task 8: Docs checkpoint via /aif-docs (depends on 1–7)
+- [x] Task 8: Docs checkpoint via /aif-docs (depends on 1–7)
   - `README.md`: what Quests is (1–2 lines), prerequisites (.NET 10 SDK, Node 24), how to run API and frontend locally, how to run tests, env vars (`LOG_LEVEL`, `ConnectionStrings__Default`), how to add a migration (`dotnet ef migrations add <Name> --project backend/Quests.Api --output-dir Infrastructure/Data/Migrations`).
   - `AGENTS.md`: replace "No application code exists yet" with the real top-level structure (backend/, frontend/, .github/, .config/).
   - Files: `README.md`, `AGENTS.md`

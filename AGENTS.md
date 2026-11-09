@@ -15,24 +15,40 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-No application code exists yet. Current contents:
+Project skeleton (no feature code yet). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
-├── .ai-factory/          # AI Factory context: config, description, architecture, rules, plans
-│   ├── config.yaml       # AI Factory settings (language, paths, workflow, git)
-│   ├── DESCRIPTION.md    # Project specification and tech stack
-│   └── rules/base.md     # Project coding conventions
-├── .claude/skills/       # Built-in aif-* skills for Claude Code
-├── .agents/skills/       # Agent skills (mirror for other agents)
-├── .mcp.json             # MCP servers: github, filesystem, chromeDevtools, playwright
-└── AGENTS.md             # This file
+├── backend/
+│   ├── Quests.slnx                   # .NET solution
+│   ├── nuget.config                  # Restricts NuGet sources to nuget.org
+│   ├── Quests.Api/                   # ASP.NET Core Minimal API
+│   │   ├── Program.cs                # Composition root
+│   │   └── Infrastructure/
+│   │       ├── Data/                 # AppDbContext, DataSetup, Migrations/
+│   │       ├── Errors/               # ProblemDetails setup
+│   │       └── Logging/              # JSON console logging, LOG_LEVEL
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory + smoke tests)
+├── frontend/                         # React + TypeScript (Vite), oxlint
+│   └── src/                          # main.tsx, App.tsx
+├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build
+├── .config/dotnet-tools.json         # Local tools (dotnet-ef)
+├── .ai-factory/                      # AI Factory context: config, description, architecture, rules, plans
+├── .claude/skills/, .agents/skills/  # aif-* skills
+├── .mcp.json                         # MCP servers
+├── README.md
+└── AGENTS.md                         # This file
 ```
 
 ## Key Entry Points
 
 | File | Purpose |
 |------|---------|
+| backend/Quests.Api/Program.cs | API composition root (logging, errors, data, health check) |
+| backend/Quests.Tests/ApiFactory.cs | In-memory API host for tests (temp SQLite) |
+| frontend/src/main.tsx | Frontend entry point |
+| frontend/vite.config.ts | Vite config, `/api` proxy to `localhost:5080` |
+| .github/workflows/ci.yml | CI workflow |
 | .ai-factory/DESCRIPTION.md | Project specification, features, stack, open decisions |
 | .ai-factory/config.yaml | AI Factory configuration |
 | .mcp.json | MCP server configuration |
@@ -41,7 +57,7 @@ quests/
 
 | Document | Path | Description |
 |----------|------|-------------|
-| README | README.md | Not created yet |
+| README | README.md | Setup, run, tests, config, migrations |
 
 ## AI Context Files
 
