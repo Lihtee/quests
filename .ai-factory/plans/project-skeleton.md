@@ -97,6 +97,13 @@ These are small infrastructure choices made to keep the skeleton verifiable.
   - `AGENTS.md`: replace "No application code exists yet" with the real top-level structure (backend/, frontend/, .github/, .config/).
   - Files: `README.md`, `AGENTS.md`
 
+<!-- /aif-verify 2026-11-09: accepted as-is (non-blocking):
+W1 500 ProblemDetails path not exercised by a test (built-in behavior, static check only);
+W2 DataSetup parses connection string outside the migration try block;
+W3 LOG_LEVEL=Error/Critical does not suppress Microsoft.AspNetCore/EF Core warnings (appsettings pins them at Warning);
+W4 ARCHITECTURE.md folder tree lacks Infrastructure/Logging/ and backend/nuget.config (owner: /aif-architecture);
+W5 frontend/public/favicon.svg is still the Vite logo. -->
+
 ## Commit Plan
 - **Commit 1** (after tasks 1-5): "feat: add .NET 10 API skeleton with EF Core SQLite, ProblemDetails and JSON logging"
 - **Commit 2** (after task 6): "feat: add React + Vite frontend skeleton"

@@ -16,10 +16,13 @@ First set up a Firebase project (see [Authentication](#authentication)).
 Start the API (http://localhost:5080):
 
 ```bash
-FIREBASE_PROJECT_ID=<your-project-id> ALLOWED_EMAILS=you@gmail.com \
-  dotnet run --project backend/Quests.Api
+# once per machine: who may sign in (kept in user-secrets, not in git)
+dotnet user-secrets set ALLOWED_EMAILS you@gmail.com --project backend/Quests.Api
+dotnet run --project backend/Quests.Api
 curl http://localhost:5080/api/health   # → Healthy
 ```
+
+In Development, `FIREBASE_PROJECT_ID` comes from `appsettings.Development.json`.
 
 On startup, the API creates the SQLite database `backend/Quests.Api/quests.db` and applies all migrations.
 

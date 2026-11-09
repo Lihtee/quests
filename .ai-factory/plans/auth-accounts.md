@@ -98,7 +98,7 @@ Meaning preservation: PASS
   - `apiGet<T>(path)`: gets `await auth.currentUser.getIdToken()`, sends `Authorization: Bearer …`; on non-2xx throws `ApiError { status, problem }` (parsed ProblemDetails when present).
   - Logging: dev-only `console.debug` of method, path, status; never log the token.
 
-- [ ] Task 9: Sign-in / hello / not-invited UI (depends on 7, 8)
+- [x] Task 9: Sign-in / hello / not-invited UI (depends on 7, 8)
   - Files: `frontend/src/features/auth/AuthGate.tsx`, `frontend/src/App.tsx`
   - States: loading → signed out ("Sign in with Google" button) → signed in: call `GET /api/me`: 200 → "Hello, {email}" + "Sign out"; 403 → "You are not invited" + "Sign out"; other errors → short error text + retry button.
   - Plain markup, no UI library (styling approach is still an open decision).

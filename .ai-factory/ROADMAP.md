@@ -9,7 +9,7 @@
 ### Foundation
 
 - [x] **Project skeleton** — .NET 10 API (Minimal APIs, feature folders), React+Vite app, EF Core + SQLite, ProblemDetails, structured logging, GitHub Actions CI
-- [ ] **Auth & accounts** — Firebase Google sign-in, API validates the JWT, email allowlist, all data scoped by user id
+- [x] **Auth & accounts** — Firebase Google sign-in, API validates the JWT, email allowlist, all data scoped by user id
 - [ ] **Deployment** — single service on Lightsail serving API + static web over HTTPS, env-var secrets, off-instance SQLite backups, CI deploys on merge; shows a signed-in "hello" page
 
 ### Features
@@ -29,3 +29,4 @@
 | Milestone | Date |
 |-----------|------|
 | Project skeleton | 2026-11-09 |
+| Auth & accounts | 2026-11-09 |
