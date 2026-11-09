@@ -66,21 +66,21 @@ Meaning preservation: PASS
 
 ### Phase 1: Backend — serve the web app and file logging
 
-- [ ] Task 1: Serve the React build and SPA fallback from the API
+- [x] Task 1: Serve the React build and SPA fallback from the API
   - Files: `backend/Quests.Api/Infrastructure/Web/StaticWebSetup.cs` (new), `backend/Quests.Api/Program.cs`
   - `UseQuestsStaticWeb()`: `UseDefaultFiles()` + `UseStaticFiles()` placed **before** `UseAuthentication`/`UseAuthorization` (files are public; the authorization fallback policy must not block them). `OnPrepareResponse`: set `Cache-Control: no-cache` for `index.html`.
   - `MapQuestsStaticWeb()` (after other endpoint mappings): `MapFallback("/api/{**path}", () => Results.NotFound())` — keeps the default (authorized) policy, so unknown API paths give 401 without a token and 404 ProblemDetails with one; then `MapFallbackToFile("index.html").AllowAnonymous()` with the same `no-cache` header. Unknown `/api/*` must never return `index.html`.
   - Missing `wwwroot` (local dev) must not break startup: the API still runs, fallback returns 404.
   - Logging: Information at startup "Static web root {WebRootPath}, index.html present: {HasIndex}"; Warning when `index.html` is missing outside Development; Debug "SPA fallback served index.html for {Path}".
 
-- [ ] Task 2: Optional file logging via `LOG_FILE` (NReco.Logging.File)
+- [x] Task 2: Optional file logging via `LOG_FILE` (NReco.Logging.File)
   - Files: `backend/Quests.Api/Quests.Api.csproj`, `backend/Quests.Api/Infrastructure/Logging/LoggingSetup.cs`, `backend/Quests.Api/Infrastructure/Logging/LoggingSettings.cs`
   - Add package `NReco.Logging.File` (latest stable 1.x; check nuget.org at implementation time).
   - `LoggingSettings` gets `string? LogFile`. In `AddQuestsLogging`: if `LOG_FILE` is empty → current JSON console (unchanged). If set → **no console provider**; `AddFile(path, o => { Append = true; FileSizeLimitBytes = 10 MB; MaxRollingFiles = 5; FormatLogEntry = JSON line })`. JSON line fields: `Timestamp` (UTC, same format as console), `LogLevel`, `Category`, `EventId`, `Message`, `Exception` (when present), written with `Utf8JsonWriter` (one line per entry). Create the directory if missing.
   - Same `LOG_LEVEL` minimum level for both outputs.
   - Logging: Information "Logging to file {LogFile}" (written to the file); Debug effective level (existing).
 
-- [ ] Task 3: Tests for static web and file logging (depends on 1, 2)
+- [x] Task 3: Tests for static web and file logging (depends on 1, 2)
   - Files: `backend/Quests.Tests/ApiFactory.cs`, `backend/Quests.Tests/Infrastructure/StaticWebTests.cs` (new), `backend/Quests.Tests/Infrastructure/FileLoggingTests.cs` (new)
   - `ApiFactory`: optional temp web root (create a temp dir with `index.html` and `assets/app.js`, `builder.UseWebRoot(dir)`), deleted on dispose; optional extra settings (for `LOG_FILE`). Keep existing tests unchanged.
   - `StaticWebTests`: every row of the request routing table above (content type `text/html` and `no-cache` for `index.html`; ProblemDetails content type for 401/404 on `/api/*`).

@@ -4,6 +4,7 @@ using Quests.Api.Infrastructure.Auth;
 using Quests.Api.Infrastructure.Data;
 using Quests.Api.Infrastructure.Errors;
 using Quests.Api.Infrastructure.Logging;
+using Quests.Api.Infrastructure.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,12 +25,14 @@ app.LogQuestsAuthorizationSettings();
 await app.MigrateQuestsDatabaseAsync();
 
 app.UseQuestsProblemDetails();
+app.UseQuestsStaticWeb();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UserProvisioningMiddleware>();
 
 app.MapHealthChecks("/api/health").AllowAnonymous();
 app.MapMeEndpoints();
+app.MapQuestsStaticWeb();
 
 await app.RunAsync();
 
