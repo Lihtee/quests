@@ -15,7 +15,7 @@
 ### Features
 
 - [x] **Minimal tasks** — web UI to create/edit/complete/delete tasks with title, notes and a single due date/time; list sorted by due date (online-only for now)
-- [ ] **Offline-first sync** — Dexie local store, pending-change queue, delta sync, conflict resolution; testable: edit offline, reconnect, see changes on another device after focus/refresh
+- [x] **Offline-first sync** — Dexie local store, pending-change queue, delta sync, conflict resolution; testable: edit offline, reconnect, see changes on another device after focus/refresh
 - [ ] **Real-time updates** — SignalR "doorbell"; testable: edit in one tab/device, the other updates within seconds without refresh
 - [ ] **Android app** — Capacitor wrapper of the React app, sign-in on device, works offline; installable APK produced by CI
 - [ ] **Notifications** — reminder at the task's due time via exact local alarms + FCM high-priority push fallback for tasks created on another device
@@ -32,3 +32,4 @@
 | Project skeleton | 2026-11-09 |
 | Auth & accounts | 2026-11-09 |
 | Minimal tasks | 2026-11-09 |
+| Offline-first sync | 2026-11-09 |

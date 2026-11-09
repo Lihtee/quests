@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (owner-scoped CRUD API, online-only React UI with Pico CSS) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (React UI with Pico CSS) + offline-first sync (Dexie store + outbox in the browser, `POST /api/sync` with per-field merge and tombstones) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -26,21 +26,26 @@ quests/
 │   │   ├── Program.cs                # Composition root
 │   │   ├── Features/
 │   │   │   ├── Identity/             # User, allowlist policy, CurrentUser, provisioning middleware, GET /api/me
-│   │   │   └── Tasks/                # TaskItem (domain), EF config, DTOs + validation, TaskService, /api/tasks endpoints
+│   │   │   ├── Tasks/                # TaskItem (domain, versions, soft delete), TaskFields, TaskValidation, EF config
+│   │   │   └── Sync/                 # SyncDtos, SyncService (per-field merge, preserve-beats-delete), POST /api/sync
 │   │   └── Infrastructure/
 │   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID; FIREBASE_AUTH_EMULATOR_HOST, Development only)
 │   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
 │   │       ├── Logging/              # JSON logging: console or LOG_FILE (NReco.Logging.File), LOG_LEVEL
 │   │       └── Web/                  # Static React build from wwwroot + SPA fallback
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, tasks, static web, file logging)
-├── frontend/                         # React + TypeScript (Vite), Pico CSS, oxlint
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, task model, sync API, static web, file logging)
+├── frontend/                         # React + TypeScript (Vite), Pico CSS, oxlint, Vitest (npm test)
 │   ├── firebase.json, .firebaserc    # Firebase Auth Emulator config (npm run emulators)
 │   ├── .env.emulator                 # VITE_USE_AUTH_EMULATOR=1 for npm run dev:emulator
 │   └── src/                          # main.tsx, App.tsx, index.css
 │       ├── features/auth/            # Firebase client (+ emulator hookup), useAuth, AuthGate (sign-in UI)
-│       ├── features/tasks/           # tasksApi, dateTime helpers, TaskForm, TaskRow, TasksPage
-│       └── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token
+│       ├── features/tasks/           # taskStore (local writes + outbox), dateTime helpers, TaskForm, TaskRow, TasksPage (liveQuery)
+│       ├── features/sync/            # syncEngine (push outbox, pull, merge), useSync (triggers)
+│       ├── domain/                   # Pure rules: taskRules (sort, validate, normalize)
+│       ├── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token
+│       ├── shared/db.ts              # Dexie schema per user (tasks, outbox, meta)
+│       └── test/setup.ts             # Vitest setup (fake-indexeddb)
 ├── deploy/                           # compose.yml (api + Caddy) and Caddyfile, uploaded to the instance by CI
 ├── docs/                             # Detailed documentation (local-testing.md, deployment.md)
 ├── Dockerfile                        # Production image: API + React build in wwwroot
@@ -73,8 +78,8 @@ quests/
 
 | Document | Path | Description |
 |----------|------|-------------|
-| README | README.md | Setup, run, tests, config, auth, tasks API, migrations |
-| Local Testing | docs/local-testing.md | Firebase Auth Emulator: fake sign-in, Playwright |
+| README | README.md | Setup, run, tests, config, auth, sync API, migrations |
+| Local Testing | docs/local-testing.md | Auth Emulator, Playwright, offline sync check |
 | Deployment | docs/deployment.md | Lightsail setup, GitHub secrets, operations, rollback |
 
 ## AI Context Files

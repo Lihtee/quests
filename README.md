@@ -2,7 +2,7 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date; online-only for now). The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date) that works offline and syncs between devices. The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
 
 ## Prerequisites
 
@@ -47,8 +47,9 @@ To test without a real Google login (fake accounts, browser automation), use the
 | `dotnet test backend/Quests.slnx` | Backend xUnit tests |
 | `npm run lint` (in `frontend/`) | Frontend lint (oxlint) |
 | `npm run build` (in `frontend/`) | Frontend type check and production build |
+| `npm test` (in `frontend/`) | Frontend Vitest tests (task rules, sync engine on an in-memory IndexedDB) |
 
-CI runs the same checks on every push and pull request to `main` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).
+CI runs the backend tests, lint and build on every push and pull request to `main` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)). It does not run `npm test` yet.
 
 ## Configuration
 
@@ -86,20 +87,41 @@ How the API handles requests:
 
 Every route except `/api/health` requires sign-in. On the first allowed request, the API creates a user row; user data is scoped by that `id`. Error bodies are RFC 7807 ProblemDetails (`application/problem+json`).
 
-## Tasks API
+## Offline-First Sync
 
-All endpoints act only on the signed-in user's tasks; another user's task id returns `404`. Body for create/update: `{ "title", "notes", "dueAt" }` (title required, ≤ 200 chars after trimming; notes ≤ 4000; `dueAt` optional ISO 8601, stored as UTC).
+The UI reads and writes only a local IndexedDB database (Dexie, one per user: `quests-<uid>`). Each write also adds an entry to a local outbox. The sync engine sends the outbox to the server and pulls changes. It runs on app start, window focus, when the browser comes back online, every 60 s while the page is visible, and about 500 ms after each local write. If a sync fails, the outbox is kept and the next trigger retries. Offline works while the tab stays open. Reloading the page offline is not supported yet (no service worker).
 
-| Endpoint | Success | Errors |
-|----------|---------|--------|
-| `GET /api/tasks` | `200` all tasks: open first (earliest due first, undated last), then completed (newest first) | `401` |
-| `POST /api/tasks` | `201` task + `Location` | `400` validation, `401` |
-| `PUT /api/tasks/{id}` | `200` task (full replace) | `400`, `401`, `404` |
-| `POST /api/tasks/{id}/complete` | `200` task | `401`, `404` |
-| `POST /api/tasks/{id}/reopen` | `200` task | `401`, `404` |
-| `DELETE /api/tasks/{id}` | `204` (hard delete) | `401`, `404` |
+`POST /api/sync` is the only task endpoint. It acts only on the signed-in user's tasks (`401` without a token, `400` for a malformed body or negative `since`).
 
-A task is `{ "id", "title", "notes", "dueAt", "completedAt", "createdAt", "updatedAt" }`.
+Request:
+
+```json
+{
+  "since": 41,
+  "changes": [
+    { "id": "<client uuid>", "op": "upsert", "baseVersion": 40, "changed": ["title"],
+      "title": "New title", "notes": null, "dueAt": null, "completedAt": null, "createdAt": "2026-11-09T08:00:00Z" },
+    { "id": "<uuid>", "op": "delete", "baseVersion": 38, "changed": [] }
+  ]
+}
+```
+
+Response: `{ "version": 44, "tasks": [ ... ], "rejected": [{ "id", "reason" }] }`. `version` is the client's next `since`. `tasks` lists the user's tasks changed after `since` (a first pull with `since: 0` skips deleted tasks), plus the current state of any task whose change was ignored or rejected. A task is `{ "id", "title", "notes", "dueAt", "completedAt", "createdAt", "updatedAt", "version", "deletedAt" }`.
+
+Rules:
+
+| Case | Result |
+|------|--------|
+| `upsert`, unknown id | Creates the task. Clients make the id; `title` must be in `changed`. |
+| `upsert`, existing task | Applies only the fields in `changed` (`title`, `notes`, `dueAt`, `completedAt`). Changes apply in arrival order, so the device that syncs last wins for the fields it changed. Other fields keep their values. |
+| `upsert`, deleted task | Restores the task and applies the change. |
+| `delete`, task unchanged since `baseVersion` | Soft delete: sets `deletedAt` and keeps the row (a later edit can restore it). |
+| `delete`, task changed after `baseVersion` | Ignored ("preserve beats delete"). The task is returned, so it comes back on that device. |
+| `delete`, unknown or already deleted | No-op |
+| Invalid values (title blank or > 200 chars after trimming, notes > 4000, unknown field or `op`) | Rejected with reason `invalid`. Nothing is saved. |
+| Task id owned by another user | Rejected with reason `forbidden`. The other user's task is not changed or returned. |
+
+Each user has a version counter. Every applied change gives the task the next number.
 
 ## Database Migrations
 
@@ -123,9 +145,9 @@ Every push to `main` builds a Docker image and deploys it to AWS Lightsail behin
 
 | Path | Contents |
 |------|----------|
-| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, tasks in `Features/Tasks/` |
+| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, task model in `Features/Tasks/`, `POST /api/sync` in `Features/Sync/` |
 | `backend/Quests.Tests` | xUnit tests |
-| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list in `src/features/tasks/`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
+| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list and local writes in `src/features/tasks/`, sync engine in `src/features/sync/`, pure task rules in `src/domain/`, Dexie schema in `src/shared/db.ts`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
 | `.github/workflows/` | CI and deploy |
 | `Dockerfile`, `.dockerignore` | Production image (API + React build) |
 | `deploy/` | Compose stack and Caddyfile used on the instance |

@@ -35,7 +35,7 @@ The distinguishing idea is time-aware tasks: each task can have a **hard deadlin
 
 ## Architecture Notes
 
-- **Offline-first sync:** clients keep a full local copy in IndexedDB and queue local changes. Delta sync ("give me everything changed since version X" + push pending changes) is the **source of truth**; it runs on app start, focus, reconnect, and on a timer. Conflict resolution strategy (e.g. last-write-wins per field) is to be finalized during design.
+- **Offline-first sync:** clients keep a full local copy in IndexedDB and queue local changes. Delta sync ("give me everything changed since version X" + push pending changes) is the **source of truth**; it runs on app start, focus, reconnect, and on a timer. Conflicts: each change carries only the fields it changed and the server applies them per field in arrival order (last sync wins per field). Deletes are soft (tombstones), and a delete is ignored if the task changed after the deleting device last saw it.
 - **SignalR as a doorbell:** while the app is open, the server notifies connected clients of a user's changes and they immediately run delta sync. Missed signals are harmless — the next delta sync catches up. No sockets or timers are kept alive in the background.
 - **Notifications:** the phone schedules exact local alarms for upcoming reminders (work offline and in Doze; requires the Android 12+ "Alarms & reminders" permission). The server sends FCM high-priority push as a fallback for reminders created on another device that the phone hasn't synced yet.
 - **Single deployable backend:** one ASP.NET Core service on Lightsail serving the API, the SignalR hub, and the static React build. SQLite file backed up regularly (snapshot/copy off-instance).
@@ -57,5 +57,4 @@ Pattern: Structured Modules (simplified, modern .NET — Minimal APIs, feature f
 
 - "What to do now" selection algorithm.
 - Recurrence rule model (fixed day of month, every N days/weeks, etc.).
-- Conflict resolution details for offline edits.
 - Distribution of the Android app (Play Store vs. sideloaded APK).

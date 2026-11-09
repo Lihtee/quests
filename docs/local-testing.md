@@ -45,6 +45,19 @@ Emulator accounts live only in the emulator's memory and are lost when it stops.
 
 **Safety:** `FIREBASE_AUTH_EMULATOR_HOST` is allowed only when the environment is `Development`. In any other environment the API refuses to start, so production never accepts unsigned tokens. Never set it on a server.
 
+## Offline Sync Check (Playwright)
+
+Use two browser contexts signed in as the same account (A and B) and one context with a second account. Go offline with `context.setOffline(true)`. To make the app sync at once after reconnecting, call `setOffline(false)` and fire the `online` event (`window.dispatchEvent(new Event('online'))`), or focus the window.
+
+| Check | Steps | Expected |
+|-------|-------|----------|
+| Offline writes | A goes offline, then creates, edits, completes and deletes tasks. A reconnects. | A's changes show on B after focus or a reload. |
+| Conflict | A goes offline and edits a task's title. B completes the same task. A reconnects. | Both changes are kept: new title, completed. |
+| Delete vs. edit | A goes offline and deletes a task. B edits the task. A reconnects. | The task is back on both devices, with B's edit. |
+| Isolation | Sign in with the second account. | None of these tasks are visible. |
+
+While offline, the browser console shows `[sync] failed { status: undefined }`, and the change stays in the IndexedDB `outbox` table of `quests-<uid>` until a sync succeeds.
+
 ## See Also
 
 - [README](../README.md): Quick Start, configuration, authentication
