@@ -2,7 +2,7 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. This repository currently contains only the project skeleton: an API, a frontend placeholder, and CI.
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI) and Google sign-in with an email allowlist.
 
 ## Prerequisites
 
@@ -11,10 +11,13 @@ Quests is a web and Android app. Each task can have a hard deadline, a soft dead
 
 ## Quick Start
 
+First set up a Firebase project (see [Authentication](#authentication)).
+
 Start the API (http://localhost:5080):
 
 ```bash
-dotnet run --project backend/Quests.Api
+FIREBASE_PROJECT_ID=<your-project-id> ALLOWED_EMAILS=you@gmail.com \
+  dotnet run --project backend/Quests.Api
 curl http://localhost:5080/api/health   # → Healthy
 ```
 
@@ -24,11 +27,12 @@ Start the frontend in a second terminal:
 
 ```bash
 cd frontend
+cp .env.example .env.local   # then fill in your Firebase web app values
 npm install
 npm run dev
 ```
 
-The Vite dev server forwards `/api` requests to the API at `http://localhost:5080`.
+The Vite dev server forwards `/api` requests to the API at `http://localhost:5080`. Open the app and sign in with Google. An allowlisted account sees "Hello, &lt;email&gt;". Any other account sees "You are not invited".
 
 ## Tests and Checks
 
@@ -46,8 +50,32 @@ CI runs the same checks on every push and pull request to `main` (see [.github/w
 |----------------------|---------|-------------|
 | `LOG_LEVEL` | `Information` | Minimum log level. Allowed: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical` (any case). An invalid value falls back to `Information` and logs a warning. |
 | `ConnectionStrings__Default` | `Data Source=quests.db` (Development only) | SQLite connection string. Outside Development it has no default, and the API refuses to start without it. |
+| `FIREBASE_PROJECT_ID` | — (required) | Firebase project id. ID tokens must have this project as audience and `https://securetoken.google.com/<id>` as issuer. The API refuses to start without it. |
+| `ALLOWED_EMAILS` | empty | Comma-separated emails allowed to sign in (case-insensitive). Read at startup, so restart to apply changes. Empty means nobody can sign in, and the API logs a warning. |
+
+Frontend variables go in `frontend/.env.local` (git-ignored; template: [frontend/.env.example](frontend/.env.example)): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
 Logs are written to the console as JSON, one line per entry.
+
+## Authentication
+
+Sign-in uses Firebase Authentication with Google. One-time Firebase setup:
+
+1. Create a project in the [Firebase console](https://console.firebase.google.com/).
+2. **Authentication → Sign-in method:** enable **Google**.
+3. **Authentication → Settings → Authorized domains:** make sure `localhost` is listed.
+4. **Project settings → Your apps:** register a **Web app** and copy its config values into `frontend/.env.local`.
+
+How the API handles requests:
+
+| Request | Response |
+|---------|----------|
+| `GET /api/health` | Always allowed, no token needed |
+| No token, invalid signature, wrong issuer/audience, or expired token | `401` ProblemDetails |
+| Valid token, but email not verified or not in `ALLOWED_EMAILS` | `403` ProblemDetails |
+| Valid token with a verified, allowlisted email | Request proceeds; `GET /api/me` returns `{ "id", "email" }` |
+
+Every route except `/api/health` requires sign-in. On the first allowed request, the API creates a user row; user data will be scoped by that `id`. Error bodies are RFC 7807 ProblemDetails (`application/problem+json`).
 
 ## Database Migrations
 
@@ -59,7 +87,7 @@ dotnet tool restore
 dotnet ef migrations add <Name> --project Quests.Api --output-dir Infrastructure/Data/Migrations
 ```
 
-The API applies new migrations on its next start.
+The API applies new migrations on its next start. `dotnet ef` does not need the auth variables: it creates the context through `AppDbContextDesignTimeFactory`, not `Program.cs`.
 
 > `backend/nuget.config` limits package sources to nuget.org, so private feeds in your user-level NuGet config don't break the restore.
 
@@ -67,8 +95,8 @@ The API applies new migrations on its next start.
 
 | Path | Contents |
 |------|----------|
-| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite) |
+| `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/` |
 | `backend/Quests.Tests` | xUnit tests |
-| `frontend/` | React + TypeScript (Vite) app |
+| `frontend/` | React + TypeScript (Vite) app; sign-in in `src/features/auth/`, API client in `src/shared/api.ts` |
 | `.github/workflows/` | CI |
 | `.config/dotnet-tools.json` | Local .NET tools (`dotnet-ef`) |

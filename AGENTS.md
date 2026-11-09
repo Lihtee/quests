@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton (no feature code yet). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -24,13 +24,18 @@ quests/
 │   ├── nuget.config                  # Restricts NuGet sources to nuget.org
 │   ├── Quests.Api/                   # ASP.NET Core Minimal API
 │   │   ├── Program.cs                # Composition root
+│   │   ├── Features/
+│   │   │   └── Identity/             # User, allowlist policy, CurrentUser, provisioning middleware, GET /api/me
 │   │   └── Infrastructure/
-│   │       ├── Data/                 # AppDbContext, DataSetup, Migrations/
+│   │       ├── Auth/                 # Firebase JwtBearer setup (FIREBASE_PROJECT_ID)
+│   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
 │   │       └── Logging/              # JSON console logging, LOG_LEVEL
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory + smoke tests)
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke + auth tests)
 ├── frontend/                         # React + TypeScript (Vite), oxlint
 │   └── src/                          # main.tsx, App.tsx
+│       ├── features/auth/            # Firebase client, useAuth, AuthGate (sign-in UI)
+│       └── shared/api.ts             # Fetch wrapper with Firebase ID token
 ├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build
 ├── .config/dotnet-tools.json         # Local tools (dotnet-ef)
 ├── .ai-factory/                      # AI Factory context: config, description, architecture, rules, plans
@@ -44,8 +49,8 @@ quests/
 
 | File | Purpose |
 |------|---------|
-| backend/Quests.Api/Program.cs | API composition root (logging, errors, data, health check) |
-| backend/Quests.Tests/ApiFactory.cs | In-memory API host for tests (temp SQLite) |
+| backend/Quests.Api/Program.cs | API composition root (logging, errors, data, auth, endpoints) |
+| backend/Quests.Tests/ApiFactory.cs | In-memory API host for tests (temp SQLite, test JWT key) |
 | frontend/src/main.tsx | Frontend entry point |
 | frontend/vite.config.ts | Vite config, `/api` proxy to `localhost:5080` |
 | .github/workflows/ci.yml | CI workflow |
@@ -57,7 +62,7 @@ quests/
 
 | Document | Path | Description |
 |----------|------|-------------|
-| README | README.md | Setup, run, tests, config, migrations |
+| README | README.md | Setup, run, tests, config, auth, migrations |
 
 ## AI Context Files
 

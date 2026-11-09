@@ -107,7 +107,7 @@ Meaning preservation: PASS
 
 ### Phase 3: Documentation
 
-- [ ] Task 10: Document auth setup (`/aif-docs` checkpoint) (depends on 1–9)
+- [x] Task 10: Document auth setup (`/aif-docs` checkpoint) (depends on 1–9)
   - Files: `README.md`, `AGENTS.md`
   - README: Firebase project setup (create project, enable Google provider, add `localhost` to authorized domains, register a web app), backend env vars `FIREBASE_PROJECT_ID`, `ALLOWED_EMAILS`, frontend `.env.local` vars, how 401/403 behave.
   - AGENTS.md: add `Features/Identity/`, `Infrastructure/Auth/`, `frontend/src/features/auth/`, `frontend/src/shared/api.ts` to the structure map.
