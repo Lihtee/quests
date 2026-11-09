@@ -29,17 +29,30 @@ export async function apiGet<T>(path: string): Promise<T> {
   return (await request('GET', path)) as T
 }
 
-/** POST/PUT/DELETE an API path with an optional JSON body. Resolves to undefined for 204. Throws ApiError on non-2xx. */
-export async function apiSend<T>(method: Exclude<Method, 'GET'>, path: string, body?: unknown): Promise<T> {
-  return (await request(method, path, body)) as T
+/**
+ * POST/PUT/DELETE an API path with an optional JSON body and extra headers. Resolves to undefined for 204.
+ * Throws ApiError on non-2xx.
+ */
+export async function apiSend<T>(
+  method: Exclude<Method, 'GET'>,
+  path: string,
+  body?: unknown,
+  extraHeaders?: Record<string, string>,
+): Promise<T> {
+  return (await request(method, path, body, extraHeaders)) as T
 }
 
-async function request(method: Method, path: string, body?: unknown): Promise<unknown> {
+async function request(
+  method: Method,
+  path: string,
+  body?: unknown,
+  extraHeaders?: Record<string, string>,
+): Promise<unknown> {
   const user = auth.currentUser
   if (!user) throw new ApiError(401, null)
 
   const token = await user.getIdToken()
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
+  const headers: Record<string, string> = { ...extraHeaders, Authorization: `Bearer ${token}` }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
   const response = await fetch(path, {

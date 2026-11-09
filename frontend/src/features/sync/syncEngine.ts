@@ -27,7 +27,16 @@ interface EngineState {
 }
 
 const SYNC_DELAY_MS = 500
+const CONNECTION_ID_HEADER = 'X-Sync-Connection-Id'
 const states = new WeakMap<QuestsDb, EngineState>()
+let senderConnectionId: string | null = null
+
+/** The open sync-signal connection; sent with each sync so the server does not signal this device back. */
+export function setSyncConnectionId(id: string | null): void {
+  if (id === senderConnectionId) return
+  senderConnectionId = id
+  if (import.meta.env.DEV) console.debug('[sync] connection id', id)
+}
 
 function stateOf(db: QuestsDb): EngineState {
   let state = states.get(db)
@@ -87,7 +96,8 @@ async function syncOnce(db: QuestsDb): Promise<boolean> {
     const since = (await readMeta<number>(db, 'lastVersion')) ?? 0
     const changes = await buildChanges(db, entries)
 
-    const response = await apiSend<SyncResponse>('POST', '/api/sync', { since, changes })
+    const headers = senderConnectionId ? { [CONNECTION_ID_HEADER]: senderConnectionId } : undefined
+    const response = await apiSend<SyncResponse>('POST', '/api/sync', { since, changes }, headers)
     await applyResponse(db, response, changes, snapshotMax)
 
     if (import.meta.env.DEV) {

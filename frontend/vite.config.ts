@@ -7,8 +7,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Backend API (dotnet run --project backend/Quests.Api)
-      '/api': 'http://localhost:5080',
+      // Backend API (dotnet run --project backend/Quests.Api); ws for the SignalR hub at /api/hubs/sync
+      '/api': { target: 'http://localhost:5080', ws: true },
     },
   },
   test: {

@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.11",
     "@picocss/pico": "^2.1.1",
     "dexie": "^4.4.7",
     "firebase": "^13.2.0",

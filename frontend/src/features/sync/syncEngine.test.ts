@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiSend } from '../../shared/api'
 import { openUserDb, readMeta, type QuestsDb, type Task } from '../../shared/db'
 import { completeTask, createTask, deleteTask, updateTask } from '../tasks/taskStore'
-import { syncNow, type SyncResponse, type TaskChange } from './syncEngine'
+import { setSyncConnectionId, syncNow, type SyncResponse, type TaskChange } from './syncEngine'
 
 vi.mock('../../shared/api', () => ({
   apiSend: vi.fn(),
@@ -180,5 +180,23 @@ describe('syncNow', () => {
 
     expect(await db.outbox.count()).toBe(0)
     expect((await local(task.id))!.title).toBe('Task')
+  })
+})
+
+describe('sync connection id', () => {
+  afterEach(() => setSyncConnectionId(null))
+
+  it('sends the signal connection id so the server skips this device, and stops after it is cleared', async () => {
+    const empty: SyncResponse = { version: 0, tasks: [], rejected: [] }
+
+    setSyncConnectionId('conn-1')
+    respond(empty)
+    await syncNow(db)
+    expect(send.mock.calls.at(-1)![3]).toEqual({ 'X-Sync-Connection-Id': 'conn-1' })
+
+    setSyncConnectionId(null)
+    respond(empty)
+    await syncNow(db)
+    expect(send.mock.calls.at(-1)![3]).toBeUndefined()
   })
 })
