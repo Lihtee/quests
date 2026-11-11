@@ -8,7 +8,7 @@ Quests is a web and Android app. Each task can have a hard deadline, a soft dead
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Node.js 24](https://nodejs.org/) (LTS) with npm
-- Java 21: optional, only for local testing with the Firebase Auth Emulator ([docs/local-testing.md](docs/local-testing.md))
+- Java 21: optional, for local testing with the Firebase Auth Emulator ([docs/local-testing.md](docs/local-testing.md)) and local Android builds ([docs/android.md](docs/android.md), also needs the Android SDK)
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ To test without a real Google login (fake accounts, browser automation), use the
 | `dotnet test backend/Quests.slnx` | Backend xUnit tests |
 | `npm run lint` (in `frontend/`) | Frontend lint (oxlint) |
 | `npm run build` (in `frontend/`) | Frontend type check and production build |
-| `npm test` (in `frontend/`) | Frontend Vitest tests (task rules, sync engine on an in-memory IndexedDB) |
+| `npm test` (in `frontend/`) | Frontend Vitest tests (task rules, sync engine on an in-memory IndexedDB, API base URL, native/web sign-in routing) |
 
 CI runs the same checks on every push and pull request to `main` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).
 

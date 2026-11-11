@@ -116,7 +116,7 @@ Android builds always use the deployed server. Running against a local backend o
 | Symptom | Cause and fix |
 |---------|---------------|
 | Sign-in fails with `DEVELOPER_ERROR` or code 10 | The signing key's SHA-1 is missing in the Firebase Android app. Add it, download `google-services.json` again, and update the secret. |
-| Sign-in fails with "no ID token" | `google-services.json` is missing or from another project, so the plugin has no web client ID. |
+| Sign-in fails with "Google sign-in returned no ID token" | Check that the APK was built with the `google-services.json` of this Firebase project (it supplies the web client ID the plugin requests the token for). |
 | Signed in, but tasks don't load (CORS errors in `chrome://inspect` → WebView console) | `CORS_ORIGINS` on the server doesn't include `https://localhost`. |
 | Requests go to `https://localhost/api/...` | The APK was built without `VITE_API_BASE_URL`. |
 | Job fails "Secret ... is empty" | Add the named secret (see [Add GitHub secrets](#3-add-github-secrets)). |

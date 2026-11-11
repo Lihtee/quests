@@ -74,3 +74,4 @@ The Vite dev server proxies the hub's WebSocket (`/api` with `ws: true`).
 
 - [README](../README.md): Quick Start, configuration, authentication
 - [Deployment](deployment.md): production setup on Lightsail
+- [Android App](android.md): APK build and on-device test checklist

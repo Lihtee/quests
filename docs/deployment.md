@@ -1,4 +1,4 @@
-[← Local Testing](local-testing.md) · [Back to README](../README.md)
+[← Local Testing](local-testing.md) · [Back to README](../README.md) · [Android App →](android.md)
 
 # Deployment
 
