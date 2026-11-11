@@ -9,6 +9,8 @@ declare global {
     readonly VITE_FIREBASE_APP_ID: string
     /** "1" = use the local Firebase Auth Emulator (dev only; see .env.emulator). */
     readonly VITE_USE_AUTH_EMULATOR?: string
+    /** Absolute server URL for API and hub calls (Android build). Empty = relative `/api` (web). */
+    readonly VITE_API_BASE_URL?: string
   }
 }
 

@@ -1,4 +1,5 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
+import { apiUrl } from '../../shared/api'
 import type { QuestsDb } from '../../shared/db'
 import { auth } from '../auth/firebase'
 import { setSyncConnectionId, syncNow } from './syncEngine'
@@ -17,7 +18,11 @@ function debug(message: string, detail?: unknown): void {
  */
 export function startSyncSignal(db: QuestsDb): () => void {
   const connection = new HubConnectionBuilder()
-    .withUrl(HUB_PATH, { accessTokenFactory: async () => (await auth.currentUser?.getIdToken()) ?? '' })
+    // withCredentials: false — the server's CORS policy does not allow credentials (bearer token only).
+    .withUrl(apiUrl(HUB_PATH), {
+      accessTokenFactory: async () => (await auth.currentUser?.getIdToken()) ?? '',
+      withCredentials: false,
+    })
     .withAutomaticReconnect()
     // SignalR's own logs can include the hub URL with the token; keep them to warnings in DEV only.
     .configureLogging(import.meta.env.DEV ? LogLevel.Warning : LogLevel.None)

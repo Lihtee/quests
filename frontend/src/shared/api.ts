@@ -24,6 +24,23 @@ export class ApiError extends Error {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
+let baseUrlLogged = false
+
+/**
+ * Absolute URL for an API path when `VITE_API_BASE_URL` is set (Android build: the app's origin is
+ * `https://localhost`, so calls must target the server). Empty or unset → the path unchanged (web + Vite proxy).
+ */
+export function apiUrl(path: string): string {
+  const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
+  if (!base) return path
+
+  if (import.meta.env.DEV && !baseUrlLogged) {
+    baseUrlLogged = true
+    console.debug('[api] base url', { base })
+  }
+  return `${base}${path}`
+}
+
 /** GET an API path with the signed-in user's Firebase ID token. Throws ApiError on non-2xx. */
 export async function apiGet<T>(path: string): Promise<T> {
   return (await request('GET', path)) as T
@@ -55,7 +72,7 @@ async function request(
   const headers: Record<string, string> = { ...extraHeaders, Authorization: `Bearer ${token}` }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
