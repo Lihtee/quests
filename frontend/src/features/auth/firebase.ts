@@ -1,5 +1,12 @@
+import { Capacitor } from '@capacitor/core'
 import { initializeApp } from 'firebase/app'
-import { connectAuthEmulator, getAuth } from 'firebase/auth'
+import {
+  connectAuthEmulator,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from 'firebase/auth'
 
 declare global {
   interface ImportMetaEnv {
@@ -16,6 +23,7 @@ declare global {
 
 const env = import.meta.env
 const authEmulatorUrl = 'http://127.0.0.1:9099'
+const isNative = Capacitor.isNativePlatform()
 
 const app = initializeApp({
   apiKey: env.VITE_FIREBASE_API_KEY,
@@ -24,9 +32,15 @@ const app = initializeApp({
   appId: env.VITE_FIREBASE_APP_ID,
 })
 
-export const auth = getAuth(app)
+// In the Android WebView getAuth()'s popup/redirect resolver doesn't work; sign-in there goes through the native
+// plugin + signInWithCredential, so auth is created without a resolver and persisted in IndexedDB.
+export const auth: Auth = isNative
+  ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
+  : getAuth(app)
 
-if (env.DEV && env.VITE_USE_AUTH_EMULATOR === '1') {
+if (env.DEV) console.debug('[firebase] auth initialized', { platform: Capacitor.getPlatform() })
+
+if (env.DEV && !isNative && env.VITE_USE_AUTH_EMULATOR === '1') {
   console.debug('[firebase] using Auth Emulator', { url: authEmulatorUrl })
   connectAuthEmulator(auth, authEmulatorUrl)
 }

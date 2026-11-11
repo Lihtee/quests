@@ -21,6 +21,12 @@ dist/
 !.env.example
 !.env.emulator
 appsettings.*.local.json
+# .env.android*.local is covered by .env.* above
+
+# Android secrets (CI writes them from GitHub secrets)
+frontend/android/app/google-services.json
+*.jks
+*.keystore
 
 # Claude Code local settings
 .claude/settings.local.json

@@ -8,11 +8,15 @@
     "dev:emulator": "vite --mode emulator",
     "emulators": "firebase emulators:start --only auth",
     "build": "tsc -b && vite build",
+    "build:android": "tsc -b && vite build --mode android && cap sync android",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.6.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "@microsoft/signalr": "^10.0.11",
     "@picocss/pico": "^2.1.1",
     "dexie": "^4.4.7",
@@ -21,6 +25,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -31,5 +36,10 @@
     "typescript": "~7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@capacitor-firebase/authentication": {
+      "firebase": "$firebase"
+    }
   }
 }

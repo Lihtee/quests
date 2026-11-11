@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  type User,
-} from 'firebase/auth'
+import { onAuthStateChanged, type User } from 'firebase/auth'
 import { auth } from './firebase'
+import { signInWithGoogle, signOutEverywhere } from './googleSignIn'
 
 export interface AuthState {
   user: User | null
@@ -34,14 +29,14 @@ export function useAuth(): AuthState {
 
   const signIn = useCallback(async () => {
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider())
+      await signInWithGoogle()
     } catch (error) {
       console.error('[useAuth] sign-in failed', error)
       throw error
     }
   }, [])
 
-  const signOut = useCallback(() => firebaseSignOut(auth), [])
+  const signOut = useCallback(() => signOutEverywhere(), [])
 
   return { user, loading, signIn, signOut }
 }

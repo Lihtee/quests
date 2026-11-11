@@ -1,5 +1,11 @@
 /* Base styling comes from Pico CSS (imported in main.tsx); only app-specific rules live here. */
 
+/* Keep content clear of the status/navigation bars in the Android app (edge-to-edge). Insets are 0 on desktop. */
+body {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
 .app-header {
   display: flex;
   align-items: center;
