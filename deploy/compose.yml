@@ -15,6 +15,7 @@ services:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS}
       LOG_LEVEL: ${LOG_LEVEL:-Information}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://localhost}
     volumes:
       - quests-data:/app/data
       - quests-logs:/app/logs
