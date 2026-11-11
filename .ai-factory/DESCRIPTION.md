@@ -24,11 +24,11 @@ The distinguishing idea is time-aware tasks: each task can have a **hard deadlin
 - **Backend framework:** ASP.NET Core Web API + SignalR
 - **Frontend:** React + TypeScript (Vite)
 - **Styling:** Pico CSS v2 (classless, built-in light/dark)
-- **Mobile:** Capacitor (Android) wrapping the same React app
+- **Mobile:** Capacitor 8 (Android) wrapping the same React app; the web build is bundled in the APK (origin `https://localhost`), API calls use `VITE_API_BASE_URL`, the server allows the origin via `CORS_ORIGINS`
 - **Server database:** SQLite (file on the Lightsail instance)
 - **ORM:** EF Core (SQLite provider, migrations)
 - **Client offline storage:** IndexedDB via Dexie (same code path on web and Android)
-- **Auth:** Firebase Authentication (Google sign-in); API validates Firebase JWTs; invite = email allowlist
+- **Auth:** Firebase Authentication (Google sign-in; on Android via `@capacitor-firebase/authentication` with `skipNativeAuth`, then `signInWithCredential` in the web SDK); API validates Firebase JWTs; invite = email allowlist
 - **Notifications:** Capacitor Local Notifications (exact alarms) + Firebase Cloud Messaging (high-priority push)
 - **Hosting / CI:** AWS Lightsail (API + web), GitHub, GitHub Actions; Docker Compose on the instance, image on Docker Hub, Caddy for HTTPS (Let's Encrypt), DuckDNS hostname
 - **Logging:** Microsoft.Extensions.Logging; JSON console, or a rotated JSON-lines file via NReco.Logging.File when `LOG_FILE` is set (Docker)
@@ -57,4 +57,4 @@ Pattern: Structured Modules (simplified, modern .NET — Minimal APIs, feature f
 
 - "What to do now" selection algorithm.
 - Recurrence rule model (fixed day of month, every N days/weeks, etc.).
-- Distribution of the Android app (Play Store vs. sideloaded APK).
+- ~~Distribution of the Android app~~ — decided: sideloaded signed release APK, built by CI on every push to `main` (workflow artifact).

@@ -15,7 +15,7 @@ Quests is a personal task manager (web + Android) with time-window tasks (hard/s
 
 ## Project Structure
 
-Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (React UI with Pico CSS) + offline-first sync (Dexie store + outbox in the browser, `POST /api/sync` with per-field merge and tombstones) + real-time updates (SignalR "doorbell" hub, client connected while visible) + Firebase Auth Emulator for local testing. Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
+Project skeleton + auth & accounts (Firebase JWT, email allowlist, users) + deployment (Docker, Caddy, CI deploy to Lightsail) + minimal tasks (React UI with Pico CSS) + offline-first sync (Dexie store + outbox in the browser, `POST /api/sync` with per-field merge and tombstones) + real-time updates (SignalR "doorbell" hub, client connected while visible) + Firebase Auth Emulator for local testing + Android app (Capacitor shell, native Google sign-in, CORS for `https://localhost`, signed APK from CI). Detailed target layout: `.ai-factory/ARCHITECTURE.md`.
 
 ```
 quests/
@@ -33,24 +33,26 @@ quests/
 │   │       ├── Data/                 # AppDbContext (+ owner query filter), IOwnedEntity, design-time factory, Migrations/
 │   │       ├── Errors/               # ProblemDetails setup
 │   │       ├── Logging/              # JSON logging: console or LOG_FILE (NReco.Logging.File), LOG_LEVEL
-│   │       └── Web/                  # Static React build from wwwroot + SPA fallback
-│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, task model, sync API, sync hub, static web, file logging)
+│   │       └── Web/                  # Static React build from wwwroot + SPA fallback; CORS policy (CORS_ORIGINS)
+│   └── Quests.Tests/                 # xUnit tests (ApiFactory, TestTokens, smoke, auth, auth emulator, task model, sync API, sync hub, static web, CORS, file logging)
 ├── frontend/                         # React + TypeScript (Vite), Pico CSS, oxlint, Vitest (npm test)
 │   ├── firebase.json, .firebaserc    # Firebase Auth Emulator config (npm run emulators)
 │   ├── .env.emulator                 # VITE_USE_AUTH_EMULATOR=1 for npm run dev:emulator
+│   ├── capacitor.config.ts           # Capacitor: appId com.lihtee.quests, webDir dist, FirebaseAuthentication (skipNativeAuth)
+│   ├── android/                      # Generated Capacitor Android project (committed); app/build.gradle has env-based release signing
 │   └── src/                          # main.tsx, App.tsx, index.css
-│       ├── features/auth/            # Firebase client (+ emulator hookup), useAuth, AuthGate (sign-in UI)
+│       ├── features/auth/            # Firebase client (+ emulator hookup, native persistence), googleSignIn (native plugin / web popup), useAuth, AuthGate (sign-in UI)
 │       ├── features/tasks/           # taskStore (local writes + outbox), dateTime helpers, TaskForm, TaskRow, TasksPage (liveQuery)
 │       ├── features/sync/            # syncEngine (push outbox, pull, merge), syncSignal (SignalR doorbell while visible), useSync (triggers)
 │       ├── domain/                   # Pure rules: taskRules (sort, validate, normalize)
-│       ├── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token
+│       ├── shared/api.ts             # Fetch wrapper (apiGet/apiSend) with Firebase ID token; apiUrl (VITE_API_BASE_URL)
 │       ├── shared/db.ts              # Dexie schema per user (tasks, outbox, meta)
 │       └── test/setup.ts             # Vitest setup (fake-indexeddb)
 ├── deploy/                           # compose.yml (api + Caddy) and Caddyfile, uploaded to the instance by CI
-├── docs/                             # Detailed documentation (local-testing.md, deployment.md)
+├── docs/                             # Detailed documentation (local-testing.md, deployment.md, android.md)
 ├── Dockerfile                        # Production image: API + React build in wwwroot
 ├── .dockerignore
-├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build, deploy on push to main
+├── .github/workflows/ci.yml          # CI: backend build/test, frontend lint/build, deploy + signed Android APK on push to main
 ├── .config/dotnet-tools.json         # Local tools (dotnet-ef)
 ├── .ai-factory/                      # AI Factory context: config, description, architecture, rules, plans
 ├── .claude/skills/, .agents/skills/  # aif-* skills
@@ -67,6 +69,7 @@ quests/
 | backend/Quests.Tests/ApiFactory.cs | In-memory API host for tests (temp SQLite, test JWT key) |
 | frontend/src/main.tsx | Frontend entry point |
 | frontend/vite.config.ts | Vite config, `/api` proxy to `localhost:5080` |
+| frontend/capacitor.config.ts | Capacitor (Android) config |
 | .github/workflows/ci.yml | CI workflow + deploy job |
 | Dockerfile | Production image build |
 | deploy/compose.yml | Production Compose stack |
@@ -81,6 +84,7 @@ quests/
 | README | README.md | Setup, run, tests, config, auth, sync API, migrations |
 | Local Testing | docs/local-testing.md | Auth Emulator, Playwright, offline sync check |
 | Deployment | docs/deployment.md | Lightsail setup, GitHub secrets, operations, rollback |
+| Android App | docs/android.md | Keystore, Firebase Android setup, CI APK, local build, test checklist |
 
 ## AI Context Files
 

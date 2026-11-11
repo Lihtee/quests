@@ -2,7 +2,7 @@
 
 > A personal task manager with time windows for tasks.
 
-Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, and a minimal task list (title, notes, optional due date) that works offline and syncs between devices (open devices update within seconds). The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
+Quests is a web and Android app. Each task can have a hard deadline, a soft deadline, and a desirable period, and a "What to do now" button picks what to work on. It syncs between devices and works offline. So far, the repository has the project skeleton (API, frontend, CI), Google sign-in with an email allowlist, automatic deployment to AWS Lightsail, a minimal task list (title, notes, optional due date) that works offline and syncs between devices (open devices update within seconds), and an Android app (Capacitor, native Google sign-in, signed APK from CI). The UI is styled with [Pico CSS](https://picocss.com/) (classless, built-in light/dark).
 
 ## Prerequisites
 
@@ -60,8 +60,9 @@ CI runs the same checks on every push and pull request to `main` (see [.github/w
 | `FIREBASE_PROJECT_ID` | — (required) | Firebase project id. ID tokens must have this project as audience and `https://securetoken.google.com/<id>` as issuer. The API refuses to start without it. |
 | `ALLOWED_EMAILS` | empty | Comma-separated emails allowed to sign in (case-insensitive). Read at startup, so restart to apply changes. Empty means nobody can sign in, and the API logs a warning. |
 | `LOG_FILE` | empty (Docker image: `/app/logs/quests.log`) | When set, logs go only to this file (JSON lines, rotated at 10 MB, 5 files kept) and console logging is off. The directory is created if missing. |
+| `CORS_ORIGINS` | empty (production compose: `https://localhost`) | Comma-separated origins allowed to call the API and hub from another origin (the Android app's `https://localhost`). Credentials are never allowed (bearer token only). Entries that aren't absolute `http(s)` origins are skipped with a warning. |
 
-Frontend variables go in `frontend/.env.local` (git-ignored; template: [frontend/.env.example](frontend/.env.example)): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
+Frontend variables go in `frontend/.env.local` (git-ignored; template: [frontend/.env.example](frontend/.env.example)): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, and optional `VITE_API_BASE_URL` (absolute server URL for API and hub calls; empty for the web app, `https://<DOMAIN>` for Android builds).
 
 Logs are written as JSON, one line per entry: to the console, or to `LOG_FILE` when it is set.
 
@@ -145,15 +146,17 @@ The API applies new migrations on its next start. `dotnet ef` does not need the 
 
 Every push to `main` builds a Docker image and deploys it to AWS Lightsail behind Caddy (HTTPS). One-time setup, GitHub secrets, logs and rollback: [docs/deployment.md](docs/deployment.md).
 
+The same workflow also builds a signed Android APK (Capacitor) and uploads it as an artifact. Keystore, Firebase Android setup, local builds and installing: [docs/android.md](docs/android.md).
+
 ## Project Layout
 
 | Path | Contents |
 |------|----------|
 | `backend/Quests.Api` | ASP.NET Core Minimal API (EF Core + SQLite); auth in `Features/Identity/` and `Infrastructure/Auth/`, task model in `Features/Tasks/`, `POST /api/sync` and the SignalR hub in `Features/Sync/` |
 | `backend/Quests.Tests` | xUnit tests |
-| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list and local writes in `src/features/tasks/`, sync engine and SignalR client in `src/features/sync/`, pure task rules in `src/domain/`, Dexie schema in `src/shared/db.ts`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator` |
+| `frontend/` | React + TypeScript (Vite) app with Pico CSS; sign-in in `src/features/auth/`, task list and local writes in `src/features/tasks/`, sync engine and SignalR client in `src/features/sync/`, pure task rules in `src/domain/`, Dexie schema in `src/shared/db.ts`, API client in `src/shared/api.ts`; Auth Emulator config in `firebase.json`, `.firebaserc`, `.env.emulator`; Capacitor config in `capacitor.config.ts` and the Android project in `android/` |
 | `.github/workflows/` | CI and deploy |
 | `Dockerfile`, `.dockerignore` | Production image (API + React build) |
 | `deploy/` | Compose stack and Caddyfile used on the instance |
-| `docs/` | Detailed documentation ([local testing](docs/local-testing.md), [deployment](docs/deployment.md)) |
+| `docs/` | Detailed documentation ([local testing](docs/local-testing.md), [deployment](docs/deployment.md), [Android app](docs/android.md)) |
 | `.config/dotnet-tools.json` | Local .NET tools (`dotnet-ef`) |

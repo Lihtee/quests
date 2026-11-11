@@ -50,6 +50,10 @@ Repository → Settings → Secrets and variables → Actions.
 
 The Firebase web config is public by design, so it is a variable and is baked into the frontend bundle. Server secrets reach the container only through `~/quests/.env` on the instance; nothing secret is committed or built into the image.
 
+**CORS:** [deploy/compose.yml](../deploy/compose.yml) sets `CORS_ORIGINS` for the `api` service, default `https://localhost` (the [Android app](android.md)'s WebView origin). To change it permanently, edit that default in `compose.yml` and push. A `CORS_ORIGINS=...` line added to `~/quests/.env` by hand (then `docker compose up -d`) works only until the next deploy, because CI rewrites `.env`.
+
+The Android APK job needs its own secrets: see [Android App](android.md#3-add-github-secrets).
+
 ## What a Deploy Does
 
 The `deploy` job in [.github/workflows/ci.yml](../.github/workflows/ci.yml):
@@ -95,3 +99,4 @@ Run on the instance from `~/quests` (Compose picks up `compose.yml` and `.env` t
 
 - [README](../README.md) — local development, configuration, authentication
 - [Local Testing](local-testing.md) — run the app with the Firebase Auth Emulator
+- [Android App](android.md) — signed APK from CI, Firebase Android setup
